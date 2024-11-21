@@ -5,7 +5,11 @@
 
 import { VNode } from './vnode'
 
-export interface RendererOptions<HostNode = RendererNode> {
+export interface RendererOptions<
+  HostNode = RendererNode,
+  HostElement = RendererElement,
+> {
+  patchProp(el: HostElement, key: string, value: any): void
   createElement(type: string): HostNode
   createText(text: string): HostNode
   setElementText(node: HostNode, text: string): void
@@ -25,6 +29,7 @@ export type RootRenderFunction<HostElement = RendererElement> = (
 
 export function createRenderer(options: RendererOptions) {
   const {
+    patchProp: hostPatchProp,
     createElement: hostCreateElement,
     createText: hostCreateText,
     insert: hostInsert,
@@ -33,6 +38,10 @@ export function createRenderer(options: RendererOptions) {
   function renderVNode(vnode: VNode | string) {
     if (typeof vnode === 'string') return hostCreateText(vnode)
     const el = hostCreateElement(vnode.type)
+
+    Object.entries(vnode.props).forEach(([key, value]) => {
+      hostPatchProp(el, key, value)
+    })
 
     for (const child of vnode.children) {
       const childEl = renderVNode(child)
