@@ -5,7 +5,11 @@
 
 import { VNode } from './vnode'
 
-export interface RendererOptions<HostNode = RendererNode> {
+export interface RendererOptions<
+  HostNode = RendererNode,
+  HostElement = RendererElement,
+> {
+  patchProp(el: HostElement, key: string, value: any): void
   createElement(type: string): HostNode
   createText(text: string): HostNode
   setElementText(node: HostNode, text: string): void
