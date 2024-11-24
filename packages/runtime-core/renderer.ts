@@ -141,8 +141,10 @@ export function createRenderer(options: RendererOptions) {
     container: RendererElement
   ) => {
     if (n1 == null) {
+      // mount
       mountComponent(n2, container)
     } else {
+      // patch
       updateComponent(n1, n2)
     }
   }
@@ -217,7 +219,9 @@ export function createRenderer(options: RendererOptions) {
   }
 
   const updateComponent = (n1: VNode, n2: VNode) => {
-    // TODO:
+    const instance = (n2.component = n1.component)!
+    instance.next = n2
+    instance.update()
   }
 
   const render: RootRenderFunction = (rootComponent, container) => {
