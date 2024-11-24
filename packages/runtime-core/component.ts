@@ -78,4 +78,12 @@ export const setupComponent = (instance: ComponentInternalInstance) => {
       emit: instance.emit,
     }) as InternalRenderFunction
   }
+
+  // コンパイルを実行することで生成されたrender関数をインスタンスに保持
+  if (compile && !component.render) {
+    const template = component.template ?? ''
+    if (template) {
+      instance.render = compile(template)
+    }
+  }
 }
