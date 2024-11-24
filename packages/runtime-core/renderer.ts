@@ -10,7 +10,7 @@ import {
   createComponentInstance,
   InternalRenderFunction,
 } from './component'
-import { VNode, Text, normalizeVNode } from './vnode'
+import { VNode, Text, normalizeVNode, createVNode } from './vnode'
 
 export interface RendererOptions<
   HostNode = RendererNode,
@@ -225,19 +225,8 @@ export function createRenderer(options: RendererOptions) {
   }
 
   const render: RootRenderFunction = (rootComponent, container) => {
-    // TODO: 移植したので削除
-    const componentRender = rootComponent.setup!()
-
-    let n1: VNode | null = null
-
-    const updateComponent = () => {
-      const n2 = componentRender()
-      patch(n1, n2, container)
-      n1 = n2
-    }
-
-    const effect = new ReactiveEffect(updateComponent)
-    effect.run()
+    const vnode = createVNode(rootComponent, {}, [])
+    patch(null, vnode, container)
   }
 
   return { render }
