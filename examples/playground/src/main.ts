@@ -11,10 +11,14 @@ const MyComponent = {
 const app = createApp({
   setup() {
     const state = reactive({ message: 'hello' })
+    const changeMessage = () => {
+      state.message += '!'
+    }
 
     return () =>
       h('div', { id: 'my-app' }, [
         h(MyComponent, { message: state.message }, []),
+        h('button', { onClick: changeMessage }, ['change message']),
       ])
   },
 })
