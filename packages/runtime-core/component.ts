@@ -1,7 +1,7 @@
 import { ReactiveEffect } from '../reactivity'
 import { emit } from './componentEmits'
 import { ComponentOptions } from './componentOptions'
-import { Props } from './componentProps'
+import { initProps, Props } from './componentProps'
 import { VNode, VNodeChild } from './vnode'
 
 type CompileFunction = (template: string) => InternalRenderFunction
@@ -60,4 +60,22 @@ export function createComponentInstance(
   instance.emit = emit.bind(null, instance)
 
   return instance
+}
+
+export const setupComponent = (instance: ComponentInternalInstance) => {
+  // propsを初期化
+  const { props } = instance.vnode
+  initProps(instance, props)
+
+  // setupを実行し、その結果をインスタンスに保持
+  const component = instance.type as Component
+  if (component.setup) {
+    // setup関数が実行された時点で reactive proxy が生成される
+    // componentRender は setup 関数の戻り値である render 関数
+    // - render 関数は proxy によって作られたオブジェクトを参照している
+    // - 実際に rerder 関数が走った時、target の getter 関数が実行され，track が実行されるようになっている
+    instance.render = component.setup(instance.props, {
+      emit: instance.emit,
+    }) as InternalRenderFunction
+  }
 }
