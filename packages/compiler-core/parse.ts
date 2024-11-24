@@ -60,6 +60,8 @@ function parseChildren(
 
     if (startsWith(s, '{{')) {
       // {{ という文字列を見つけたら、マスタッシュ構文としてパースする
+      // parseInterpolationは、}} が見つからなかった場合は undefined を返す
+      // その場合、以降の　parseText への分岐でテキストとしてパースさせる
       node = parseInterpolation(context)
     } else if (s[0] === '<') {
       // sが"<"で始まり、かつ次の文字がアルファベットの場合は要素としてパースする
@@ -126,12 +128,15 @@ function startsWithEndTagOpen(source: string, tag: string): boolean {
 }
 
 function parseText(context: ParserContext): TextNode {
-  // "<" (タグの開始(開始タグ終了タグ問わず))まで読み進め、何文字読んだかを元にTextデータの終了時点のindexを算出する
-  const endToken = '<'
+  // < や {{ が出現したら、parseTextは終わり
+  const endTokens = ['<', '{{']
+  // 出現するまで読み進め、何文字読んだかを元にTextデータの終了時点のindexを算出する
   let endIndex = context.source.length
-  const index = context.source.indexOf(endToken, 1)
-  if (index !== -1 && endIndex > index) {
-    endIndex = index
+  for (let i = 0; i < endTokens.length; i++) {
+    const index = context.source.indexOf(endTokens[i], 1)
+    if (index !== -1 && endIndex > index) {
+      endIndex = index
+    }
   }
 
   const start = getCursor(context) // これは loc 用
