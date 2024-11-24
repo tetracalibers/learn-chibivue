@@ -1,4 +1,10 @@
-import { ElementNode, NodeTypes, TemplateChildNode, TextNode } from './ast'
+import {
+  ElementNode,
+  InterpolationNode,
+  NodeTypes,
+  TemplateChildNode,
+  TextNode,
+} from './ast'
 
 // parseの結果（AST）をもとにコード（文字列）を生成
 export const generate = ({
@@ -6,9 +12,11 @@ export const generate = ({
 }: {
   children: TemplateChildNode[]
 }): string => {
-  return `return function render() {
-  const { h } = ChibiVue;
-  return ${genNode(children[0])};
+  return `return function render(_ctx) {
+  with (_ctx) {
+    const { h } = ChibiVue;
+    return ${genNode(children[0])};
+  }
 }`
 }
 
@@ -18,6 +26,8 @@ const genNode = (node: TemplateChildNode): string => {
       return genElement(node)
     case NodeTypes.TEXT:
       return genText(node)
+    case NodeTypes.INTERPOLATION:
+      return genInterpolation(node)
     default:
       return ''
   }
@@ -31,4 +41,8 @@ const genElement = (el: ElementNode): string => {
 
 const genText = (text: TextNode): string => {
   return `\`${text.content}\``
+}
+
+const genInterpolation = (node: InterpolationNode): string => {
+  return `${node.content}`
 }

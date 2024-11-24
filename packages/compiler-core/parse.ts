@@ -1,6 +1,7 @@
 import {
   AttributeNode,
   ElementNode,
+  InterpolationNode,
   NodeTypes,
   Position,
   SourceLocation,
@@ -57,7 +58,12 @@ function parseChildren(
     const s = context.source
     let node: TemplateChildNode | undefined = undefined
 
-    if (s[0] === '<') {
+    if (startsWith(s, '{{')) {
+      // {{ という文字列を見つけたら、マスタッシュ構文としてパースする
+      // parseInterpolationは、}} が見つからなかった場合は undefined を返す
+      // その場合、以降の　parseText への分岐でテキストとしてパースさせる
+      node = parseInterpolation(context)
+    } else if (s[0] === '<') {
       // sが"<"で始まり、かつ次の文字がアルファベットの場合は要素としてパースする
       if (/[a-z]/i.test(s[1])) {
         node = parseElement(context, ancestors)
@@ -122,12 +128,15 @@ function startsWithEndTagOpen(source: string, tag: string): boolean {
 }
 
 function parseText(context: ParserContext): TextNode {
-  // "<" (タグの開始(開始タグ終了タグ問わず))まで読み進め、何文字読んだかを元にTextデータの終了時点のindexを算出する
-  const endToken = '<'
+  // < や {{ が出現したら、parseTextは終わり
+  const endTokens = ['<', '{{']
+  // 出現するまで読み進め、何文字読んだかを元にTextデータの終了時点のindexを算出する
   let endIndex = context.source.length
-  const index = context.source.indexOf(endToken, 1)
-  if (index !== -1 && endIndex > index) {
-    endIndex = index
+  for (let i = 0; i < endTokens.length; i++) {
+    const index = context.source.indexOf(endTokens[i], 1)
+    if (index !== -1 && endIndex > index) {
+      endIndex = index
+    }
   }
 
   const start = getCursor(context) // これは loc 用
@@ -311,6 +320,41 @@ function parseAttributeValue(context: ParserContext): AttributeValue {
   }
 
   return { content, loc: getSelection(context, start) }
+}
+
+function parseInterpolation(
+  context: ParserContext
+): InterpolationNode | undefined {
+  const [open, close] = ['{{', '}}']
+  const closeIndex = context.source.indexOf(close, open.length)
+  if (closeIndex === -1) return undefined
+
+  const start = getCursor(context)
+  advanceBy(context, open.length)
+
+  const innerStart = getCursor(context)
+  const innerEnd = getCursor(context)
+  const rawContentLength = closeIndex - open.length
+  const rawContent = context.source.slice(0, rawContentLength)
+  const preTrimContent = parseTextData(context, rawContentLength)
+
+  const content = preTrimContent.trim()
+
+  const startOffset = preTrimContent.indexOf(content)
+
+  if (startOffset > 0) {
+    advancePositionWithMutation(innerStart, rawContent, startOffset)
+  }
+  const endOffset =
+    rawContentLength - (preTrimContent.length - content.length - startOffset)
+  advancePositionWithMutation(innerEnd, rawContent, endOffset)
+  advanceBy(context, close.length)
+
+  return {
+    type: NodeTypes.INTERPOLATION,
+    content,
+    loc: getSelection(context, start),
+  }
 }
 
 function advanceBy(context: ParserContext, numberOfCharacters: number): void {
