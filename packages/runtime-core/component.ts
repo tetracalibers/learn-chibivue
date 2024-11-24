@@ -1,4 +1,5 @@
 import { ReactiveEffect } from '../reactivity'
+import { emit } from './componentEmits'
 import { ComponentOptions } from './componentOptions'
 import { Props } from './componentProps'
 import { VNode, VNodeChild } from './vnode'
@@ -18,6 +19,7 @@ export interface ComponentInternalInstance {
   isMounted: boolean
   propsOptions: Props // コンポーネントの定義に含まれる、propsオプションの値
   props: Data // 実際に親から渡されたデータ
+  emit: (event: string, ...args: any[]) => void
 }
 
 export type InternalRenderFunction = {
@@ -41,8 +43,11 @@ export function createComponentInstance(
     render: null!,
     propsOptions: type.props || {},
     props: {},
+    emit: null!, // to be set immediately
     isMounted: false,
   }
+
+  instance.emit = emit.bind(null, instance)
 
   return instance
 }
