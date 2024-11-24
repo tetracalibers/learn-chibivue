@@ -22,6 +22,7 @@ export interface RendererOptions<
   setElementText(node: HostNode, text: string): void
   setText(node: HostNode, text: string): void
   insert(child: HostNode, parent: HostNode, anchor?: HostNode | null): void
+  parentNode(node: HostNode): HostNode | null
 }
 
 export interface RendererNode {
@@ -42,6 +43,7 @@ export function createRenderer(options: RendererOptions) {
     createText: hostCreateText,
     setText: hostSetText,
     insert: hostInsert,
+    parentNode: hostParentNode,
   } = options
 
   const patch = (n1: VNode | null, n2: VNode, container: RendererElement) => {
@@ -161,6 +163,57 @@ export function createRenderer(options: RendererOptions) {
     }
 
     // 3. ReactiveEffectを生成し、それをインスタンスに保持
+    setupRenderEffect(instance, initialVNode, container)
+  }
+
+  const setupRenderEffect = (
+    instance: ComponentInternalInstance,
+    initialVNode: VNode,
+    container: RendererElement
+  ) => {
+    const componentUpdateFn = () => {
+      const { render } = instance
+
+      if (!instance.isMounted) {
+        // mount process
+        const subTree = (instance.subTree = normalizeVNode(render()))
+        patch(null, subTree, container)
+        initialVNode.el = subTree.el
+        instance.isMounted = true
+      } else {
+        // patch process
+        let { next, vnode } = instance
+
+        if (next) {
+          next.el = vnode.el
+          next.component = instance
+          instance.vnode = next
+          instance.next = null
+        } else {
+          next = vnode
+        }
+
+        const prevTree = instance.subTree
+        const nextTree = normalizeVNode(render())
+        instance.subTree = nextTree
+
+        patch(prevTree, nextTree, hostParentNode(prevTree.el!)!)
+        next.el = nextTree.el
+      }
+    }
+
+    // updateComponent を渡して ReactiveEffect (Observer 側)を生成する
+    // それをinstance.effectに保持させる
+    const effect = (instance.effect = new ReactiveEffect(componentUpdateFn))
+
+    // effect.run() は effect を実行する関数
+    // 1. activeEffect に updateComponent (を持った ReactiveEffect) が設定される
+    // 2. この状態で track が走ると、targetMap に target と updateComponent (を持った ReactiveEffect) のマップが登録される（リアクティブの形成）
+    // 3. この状態で target が書き換えられ（setterが実行され）、trigger が走ると、targetMap から effect(今回の例だと updateComponent)をみつけ、実行する
+    // このように画面の更新を行う関数を、instance.update に登録しておく
+    const update = (instance.update = () => effect.run())
+
+    update()
   }
 
   const updateComponent = (n1: VNode, n2: VNode) => {
@@ -179,13 +232,7 @@ export function createRenderer(options: RendererOptions) {
       n1 = n2
     }
 
-    // updateComponent を渡して ReactiveEffect (Observer 側)を生成する
     const effect = new ReactiveEffect(updateComponent)
-    // effect を実行
-    // 1. activeEffect に updateComponent (を持った ReactiveEffect) が設定される
-    // 2. この状態で track が走ると、targetMap に target と updateComponent (を持った ReactiveEffect) のマップが登録される（リアクティブの形成）
-    // 3. この状態で target が書き換えられ（setterが実行され）、trigger が走ると、targetMap から effect(今回の例だと updateComponent)をみつけ、実行する
-    // これで画面の更新が行われる
     effect.run()
   }
 
