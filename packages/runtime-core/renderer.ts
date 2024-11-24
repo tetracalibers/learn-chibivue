@@ -8,6 +8,7 @@ import {
   Component,
   ComponentInternalInstance,
   createComponentInstance,
+  InternalRenderFunction,
 } from './component'
 import { VNode, Text, normalizeVNode } from './vnode'
 
@@ -150,6 +151,10 @@ export function createRenderer(options: RendererOptions) {
       createComponentInstance(initialVNode))
 
     // 2. setupを実行し、その結果をインスタンスに保持
+    const component = initialVNode.type as Component
+    if (component.setup) {
+      instance.render = component.setup() as InternalRenderFunction
+    }
 
     // 3. ReactiveEffectを生成し、それをインスタンスに保持
   }
