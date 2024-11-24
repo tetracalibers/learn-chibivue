@@ -12,21 +12,33 @@ import { CompilerOptions } from './options'
 
 // parseの結果（AST）をもとにコード（文字列）を生成
 export const generate = (
-  {
-    children,
-  }: {
-    children: TemplateChildNode[]
-  },
+  { children }: { children: TemplateChildNode[] },
   option: Required<CompilerOptions>
 ): string => {
   // ブラウザモードでない場合には with 文を含まないコードを生成
-  // Vite は ESM を扱う都合上，非厳格モード (sloppy モード) でのみ動作するコードを処理できず，with 文を扱うことができないため
-  return `${option.isBrowser ? 'return ' : ''}function render(_ctx) {
-    ${option.isBrowser ? 'with (_ctx) {' : ''}
-      const { h } = ChibiVue;
-      return ${genNode(children[0], option)};
-    ${option.isBrowser ? '}' : ''}
-}`
+  // Vite は ESM を扱う都合上、非厳格モード（sloppy モード）でのみ動作するコードを処理できず、with 文を扱うことができないため
+
+  // 'return' のプレフィックスを決定
+  const returnPrefix = option.isBrowser ? 'return ' : ''
+
+  // 'with' 文の開始と終了を決定
+  const withOpen = option.isBrowser ? 'with (_ctx) {' : ''
+  const withClose = option.isBrowser ? '}' : ''
+
+  // render 関数の本体を生成
+  const renderBody = `
+    const { h } = ChibiVue;
+    return ${genNode(children[0], option)};
+  `
+
+  // 最終的なコードを組み立て
+  const renderFunction = `${returnPrefix}function render(_ctx) {
+    ${withOpen}
+      ${renderBody}
+    ${withClose}
+  }`
+
+  return renderFunction
 }
 
 const genNode = (

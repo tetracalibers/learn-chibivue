@@ -168,6 +168,8 @@ export function createRenderer(options: RendererOptions) {
     const componentUpdateFn = () => {
       const { render, setupState } = instance
 
+      console.log('render', render)
+
       if (!instance.isMounted) {
         // mount process
         const subTree = (instance.subTree = normalizeVNode(render(setupState)))
