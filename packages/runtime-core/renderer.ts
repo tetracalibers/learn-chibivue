@@ -4,7 +4,11 @@
 //
 
 import { ReactiveEffect } from '../reactivity'
-import { Component } from './component'
+import {
+  Component,
+  ComponentInternalInstance,
+  createComponentInstance,
+} from './component'
 import { VNode, Text, normalizeVNode } from './vnode'
 
 export interface RendererOptions<
@@ -141,7 +145,13 @@ export function createRenderer(options: RendererOptions) {
   }
 
   const mountComponent = (initialVNode: VNode, container: RendererElement) => {
-    // TODO:
+    // 1. コンポーネントのインスタンスを生成
+    const instance: ComponentInternalInstance = (initialVNode.component =
+      createComponentInstance(initialVNode))
+
+    // 2. setupを実行し、その結果をインスタンスに保持
+
+    // 3. ReactiveEffectを生成し、それをインスタンスに保持
   }
 
   const updateComponent = (n1: VNode, n2: VNode) => {
