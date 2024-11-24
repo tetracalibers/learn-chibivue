@@ -1,8 +1,11 @@
 import { ReactiveEffect } from '../reactivity'
 import { ComponentOptions } from './componentOptions'
+import { Props } from './componentProps'
 import { VNode, VNodeChild } from './vnode'
 
 export type Component = ComponentOptions
+
+export type Data = Record<string, unknown>
 
 export interface ComponentInternalInstance {
   type: Component // 元となるユーザー定義のコンポーネント
@@ -13,6 +16,8 @@ export interface ComponentInternalInstance {
   render: InternalRenderFunction
   update: () => void
   isMounted: boolean
+  propsOptions: Props // コンポーネントの定義に含まれる、propsオプションの値
+  props: Data // 実際に親から渡されたデータ
 }
 
 export type InternalRenderFunction = {
@@ -34,6 +39,8 @@ export function createComponentInstance(
     subTree: null!,
     update: null!,
     render: null!,
+    propsOptions: type.props || {},
+    props: {},
     isMounted: false,
   }
 
