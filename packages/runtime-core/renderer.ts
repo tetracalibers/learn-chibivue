@@ -15,6 +15,7 @@ export interface RendererOptions<
   createElement(type: string): HostNode
   createText(text: string): HostNode
   setElementText(node: HostNode, text: string): void
+  setText(node: HostNode, text: string): void
   insert(child: HostNode, parent: HostNode, anchor?: HostNode | null): void
 }
 
@@ -34,6 +35,7 @@ export function createRenderer(options: RendererOptions) {
     patchProp: hostPatchProp,
     createElement: hostCreateElement,
     createText: hostCreateText,
+    setText: hostSetText,
     insert: hostInsert,
   } = options
 
@@ -111,9 +113,14 @@ export function createRenderer(options: RendererOptions) {
     container: RendererElement
   ) => {
     if (n1 == null) {
+      // mount
       hostInsert((n2.el = hostCreateText(n2.children as string)), container)
     } else {
-      // TODO: patch
+      // patch
+      const el = (n2.el = n1.el!)
+      if (n2.children !== n1.children) {
+        hostSetText(el, n2.children as string)
+      }
     }
   }
 
