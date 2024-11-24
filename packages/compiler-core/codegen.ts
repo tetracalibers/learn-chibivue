@@ -8,18 +8,20 @@ import {
   TemplateChildNode,
   TextNode,
 } from './ast'
+import { CompilerOptions } from './options'
 
 // parseの結果（AST）をもとにコード（文字列）を生成
-export const generate = ({
-  children,
-}: {
-  children: TemplateChildNode[]
-}): string => {
-  return `return function render(_ctx) {
-  with (_ctx) {
-    const { h } = ChibiVue;
-    return ${genNode(children[0])};
-  }
+export const generate = (
+  {
+    children,
+  }: {
+    children: TemplateChildNode[]
+  },
+  option: Required<CompilerOptions>
+): string => {
+  return `${option.isBrowser ? 'return ' : ''}function render(_ctx) {
+  const { h } = ChibiVue;
+  return ${genNode(children[0])};
 }`
 }
 
