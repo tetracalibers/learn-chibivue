@@ -4,6 +4,16 @@ import { ComponentOptions } from './componentOptions'
 import { Props } from './componentProps'
 import { VNode, VNodeChild } from './vnode'
 
+type CompileFunction = (template: string) => InternalRenderFunction
+
+// コンパイラ本体を保持する変数
+let compile: CompileFunction | undefined
+
+// コンパイラを登録する関数
+export function registerRuntimeCompiler(_compile: any) {
+  compile = _compile
+}
+
 export type Component = ComponentOptions
 
 export type Data = Record<string, unknown>
