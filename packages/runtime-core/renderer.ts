@@ -43,8 +43,12 @@ export function createRenderer(options: RendererOptions) {
     const { type } = n2
     if (type === Text) {
       processText(n1, n2, container)
-    } else {
+    } else if (typeof type === 'string') {
       processElement(n1, n2, container)
+    } else if (typeof type === 'object') {
+      processComponent(n1, n2, container)
+    } else {
+      // noop
     }
   }
 
@@ -122,6 +126,26 @@ export function createRenderer(options: RendererOptions) {
         hostSetText(el, n2.children as string)
       }
     }
+  }
+
+  const processComponent = (
+    n1: VNode | null,
+    n2: VNode,
+    container: RendererElement
+  ) => {
+    if (n1 == null) {
+      mountComponent(n2, container)
+    } else {
+      updateComponent(n1, n2)
+    }
+  }
+
+  const mountComponent = (initialVNode: VNode, container: RendererElement) => {
+    // TODO:
+  }
+
+  const updateComponent = (n1: VNode, n2: VNode) => {
+    // TODO:
   }
 
   const render: RootRenderFunction = (rootComponent, container) => {
