@@ -10,6 +10,7 @@ import {
   createComponentInstance,
   InternalRenderFunction,
 } from './component'
+import { initProps, updateProps } from './componentProps'
 import { VNode, Text, normalizeVNode, createVNode } from './vnode'
 
 export interface RendererOptions<
@@ -154,17 +155,23 @@ export function createRenderer(options: RendererOptions) {
     const instance: ComponentInternalInstance = (initialVNode.component =
       createComponentInstance(initialVNode))
 
-    // 2. setupを実行し、その結果をインスタンスに保持
+    // 2. propsを初期化
+    const { props } = instance.vnode
+    initProps(instance, props)
+
+    // 3. setupを実行し、その結果をインスタンスに保持
     const component = initialVNode.type as Component
     if (component.setup) {
       // setup関数が実行された時点で reactive proxy が生成される
       // componentRender は setup 関数の戻り値である render 関数
       // - render 関数は proxy によって作られたオブジェクトを参照している
       // - 実際に rerder 関数が走った時、target の getter 関数が実行され，track が実行されるようになっている
-      instance.render = component.setup() as InternalRenderFunction
+      instance.render = component.setup(
+        instance.props
+      ) as InternalRenderFunction
     }
 
-    // 3. ReactiveEffectを生成し、それをインスタンスに保持
+    // 4. ReactiveEffectを生成し、それをインスタンスに保持
     setupRenderEffect(instance, initialVNode, container)
   }
 
@@ -191,6 +198,7 @@ export function createRenderer(options: RendererOptions) {
           next.component = instance
           instance.vnode = next
           instance.next = null
+          updateProps(instance, next.props)
         } else {
           next = vnode
         }
