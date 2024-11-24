@@ -35,25 +35,8 @@ export function createRenderer(options: RendererOptions) {
     insert: hostInsert,
   } = options
 
-  function renderVNode(vnode: VNode | string) {
-    if (typeof vnode === 'string') return hostCreateText(vnode)
-    const el = hostCreateElement(vnode.type)
-
-    Object.entries(vnode.props).forEach(([key, value]) => {
-      hostPatchProp(el, key, value)
-    })
-
-    for (const child of vnode.children) {
-      const childEl = renderVNode(child)
-      hostInsert(childEl, el)
-    }
-
-    return el
-  }
-
   const render: RootRenderFunction = (vnode, container) => {
-    const el = renderVNode(vnode)
-    hostInsert(el, container)
+    // TODO
   }
 
   return { render }
