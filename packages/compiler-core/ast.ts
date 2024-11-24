@@ -6,6 +6,7 @@ export const enum NodeTypes {
   INTERPOLATION, // マスタッシュ構文
 
   ATTRIBUTE,
+  DIRECTIVE,
 }
 
 // 全ての Node は type と loc を持つ
@@ -18,16 +19,27 @@ export interface Node {
 export interface ElementNode extends Node {
   type: NodeTypes.ELEMENT
   tag: string // eg. "div"
-  props: Array<AttributeNode> // eg. { name: "class", value: { content: "container" } }
+  props: Array<AttributeNode | DirectiveNode>
   children: TemplateChildNode[]
   isSelfClosing: boolean // eg. <img /> -> true
 }
 
 // ElementNode が持つ属性
+// eg. { name: "class", value: { content: "container" } }
 export interface AttributeNode extends Node {
   type: NodeTypes.ATTRIBUTE
   name: string
   value: TextNode | undefined
+}
+
+// ディレクティブ
+// v-name:arg="exp" というような形式で表すことにする
+// eg. v-on:click="increment"の場合は { name: "on", arg: "click", exp="increment" }
+export interface DirectiveNode extends Node {
+  type: NodeTypes.DIRECTIVE
+  name: string
+  arg: string
+  exp: string
 }
 
 export interface InterpolationNode extends Node {
