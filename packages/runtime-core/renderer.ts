@@ -38,7 +38,7 @@ export function createRenderer(options: RendererOptions) {
   const patch = (n1: VNode | null, n2: VNode, container: RendererElement) => {
     const { type } = n2
     if (type === Text) {
-      // processText(n1, n2, container);
+      processText(n1, n2, container)
     } else {
       processElement(n1, n2, container)
     }
@@ -76,6 +76,18 @@ export function createRenderer(options: RendererOptions) {
     for (let i = 0; i < children.length; i++) {
       const child = (children[i] = normalizeVNode(children[i]))
       patch(null, child, container)
+    }
+  }
+
+  const processText = (
+    n1: VNode | null,
+    n2: VNode,
+    container: RendererElement
+  ) => {
+    if (n1 == null) {
+      hostInsert((n2.el = hostCreateText(n2.children as string)), container)
+    } else {
+      // TODO: patch
     }
   }
 
