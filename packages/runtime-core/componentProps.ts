@@ -1,4 +1,5 @@
 import { reactive } from '../reactivity'
+import { camelize, hasOwn } from '../shared'
 import { ComponentInternalInstance, Data } from './component'
 
 export type Props = Record<string, PropOptions | null>
@@ -32,8 +33,11 @@ function setFullProps(
   if (rawProps) {
     for (let key in rawProps) {
       const value = rawProps[key]
-      if (options && options.hasOwnProperty(key)) {
-        props[key] = value
+
+      // kebab -> camel
+      let camelKey
+      if (options && hasOwn(options, (camelKey = camelize(key)))) {
+        props[camelKey] = value
       }
     }
   }
@@ -44,5 +48,8 @@ export function updateProps(
   rawProps: Data | null
 ) {
   const { props } = instance
-  Object.assign(props, rawProps)
+  Object.entries(rawProps ?? {}).forEach(([key, value]) => {
+    // kebab -> camel
+    props[camelize(key)] = value
+  })
 }
