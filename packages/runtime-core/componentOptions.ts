@@ -5,4 +5,5 @@ export type ComponentOptions = {
     ctx: { emit: (event: string, ...args: any[]) => void }
   ) => Function
   props?: Record<string, any>
+  template?: string
 }
