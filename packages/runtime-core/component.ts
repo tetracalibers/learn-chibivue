@@ -30,6 +30,7 @@ export interface ComponentInternalInstance {
   propsOptions: Props // コンポーネントの定義に含まれる、propsオプションの値
   props: Data // 実際に親から渡されたデータ
   emit: (event: string, ...args: any[]) => void
+  setupState: Data // setupの結果がオブジェクトの場合、ここに格納
 }
 
 export type InternalRenderFunction = {
@@ -54,6 +55,7 @@ export function createComponentInstance(
     propsOptions: type.props || {},
     props: {},
     emit: null!, // to be set immediately
+    setupState: {},
     isMounted: false,
   }
 
@@ -74,9 +76,17 @@ export const setupComponent = (instance: ComponentInternalInstance) => {
     // componentRender は setup 関数の戻り値である render 関数
     // - render 関数は proxy によって作られたオブジェクトを参照している
     // - 実際に rerder 関数が走った時、target の getter 関数が実行され，track が実行されるようになっている
-    instance.render = component.setup(instance.props, {
+    const setupResult = component.setup(instance.props, {
       emit: instance.emit,
     }) as InternalRenderFunction
+
+    if (typeof setupResult === 'function') {
+      instance.render = setupResult
+    } else if (typeof setupResult === 'object' && setupResult !== null) {
+      instance.setupState = setupResult
+    } else {
+      // do nothing
+    }
   }
 
   // コンパイルを実行することで生成されたrender関数をインスタンスに保持
