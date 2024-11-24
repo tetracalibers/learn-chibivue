@@ -166,9 +166,9 @@ export function createRenderer(options: RendererOptions) {
       // componentRender は setup 関数の戻り値である render 関数
       // - render 関数は proxy によって作られたオブジェクトを参照している
       // - 実際に rerder 関数が走った時、target の getter 関数が実行され，track が実行されるようになっている
-      instance.render = component.setup(
-        instance.props
-      ) as InternalRenderFunction
+      instance.render = component.setup(instance.props, {
+        emit: instance.emit,
+      }) as InternalRenderFunction
     }
 
     // 4. ReactiveEffectを生成し、それをインスタンスに保持
