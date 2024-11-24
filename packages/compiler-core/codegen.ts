@@ -12,9 +12,11 @@ export const generate = ({
 }: {
   children: TemplateChildNode[]
 }): string => {
-  return `return function render() {
-  const { h } = ChibiVue;
-  return ${genNode(children[0])};
+  return `return function render(_ctx) {
+  with (_ctx) {
+    const { h } = ChibiVue;
+    return ${genNode(children[0])};
+  }
 }`
 }
 
