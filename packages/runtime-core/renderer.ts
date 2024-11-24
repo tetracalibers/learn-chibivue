@@ -3,7 +3,7 @@
 // Node(DOMに限らず)を扱うオブジェクトは factory の関数の引数として受け取るようにする
 //
 
-import { VNode, Text } from './vnode'
+import { VNode, Text, normalizeVNode } from './vnode'
 
 export interface RendererOptions<
   HostNode = RendererNode,
@@ -40,7 +40,42 @@ export function createRenderer(options: RendererOptions) {
     if (type === Text) {
       // processText(n1, n2, container);
     } else {
-      // processElement(n1, n2, container);
+      processElement(n1, n2, container)
+    }
+  }
+
+  const processElement = (
+    n1: VNode | null,
+    n2: VNode,
+    container: RendererElement
+  ) => {
+    if (n1 === null) {
+      mountElement(n2, container)
+    } else {
+      // patchElement(n1, n2);
+    }
+  }
+
+  const mountElement = (vnode: VNode, container: RendererElement) => {
+    let el: RendererElement
+    const { type, props } = vnode
+    el = vnode.el = hostCreateElement(type as string)
+
+    mountChildren(vnode.children as VNode[], el)
+
+    if (props) {
+      for (const key in props) {
+        hostPatchProp(el, key, props[key])
+      }
+    }
+
+    hostInsert(el, container)
+  }
+
+  const mountChildren = (children: VNode[], container: RendererElement) => {
+    for (let i = 0; i < children.length; i++) {
+      const child = (children[i] = normalizeVNode(children[i]))
+      patch(null, child, container)
     }
   }
 
