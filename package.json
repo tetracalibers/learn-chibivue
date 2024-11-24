@@ -13,6 +13,8 @@
     "@types/node": "^22.9.1"
   },
   "dependencies": {
+    "@babel/parser": "^7.26.2",
+    "magic-string": "^0.30.13",
     "vite": "^5.4.11"
   }
 }
