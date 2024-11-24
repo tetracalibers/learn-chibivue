@@ -1,14 +1,16 @@
+import { ComponentInternalInstance } from './component'
 import { RendererNode } from './renderer'
 
 export const Text = Symbol()
 
-export type VNodeTypes = string | typeof Text
+export type VNodeTypes = string | typeof Text | object
 
 export interface VNode<HostNode = RendererNode> {
   type: VNodeTypes
   props: VNodeProps | null
   children: VNodeNormalizedChildren
   el: HostNode | undefined // 実際のDOMへの参照
+  component: ComponentInternalInstance | null // コンポーネントのインスタンス
 }
 
 export interface VNodeProps {
@@ -26,7 +28,7 @@ export function createVNode(
   props: VNodeProps | null,
   children: VNodeNormalizedChildren
 ): VNode {
-  const vnode: VNode = { type, props, children, el: undefined }
+  const vnode: VNode = { type, props, children, el: undefined, component: null }
   return vnode
 }
 
