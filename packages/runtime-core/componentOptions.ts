@@ -3,7 +3,7 @@ export type ComponentOptions = {
   setup?: (
     props: Record<string, any>,
     ctx: { emit: (event: string, ...args: any[]) => void }
-  ) => Function
+  ) => Function | Record<string, unknown>
   props?: Record<string, any>
   template?: string
 }
