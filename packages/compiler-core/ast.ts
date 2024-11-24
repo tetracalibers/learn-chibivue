@@ -3,6 +3,8 @@
 export const enum NodeTypes {
   ELEMENT,
   TEXT,
+  INTERPOLATION, // マスタッシュ構文
+
   ATTRIBUTE,
 }
 
@@ -28,7 +30,12 @@ export interface AttributeNode extends Node {
   value: TextNode | undefined
 }
 
-export type TemplateChildNode = ElementNode | TextNode
+export interface InterpolationNode extends Node {
+  type: NodeTypes.INTERPOLATION
+  content: string // マスタッシュの中に記述された内容
+}
+
+export type TemplateChildNode = ElementNode | TextNode | InterpolationNode
 
 export interface TextNode extends Node {
   type: NodeTypes.TEXT
