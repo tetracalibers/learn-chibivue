@@ -34,7 +34,7 @@ export interface ComponentInternalInstance {
 }
 
 export type InternalRenderFunction = {
-  (): VNodeChild
+  (ctx: Data): VNodeChild
 }
 
 // コンポーネントのインスタンスを生成するための関数(コンストラクタの役割をするもの)
