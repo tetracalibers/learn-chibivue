@@ -3,7 +3,7 @@
 // Node(DOMに限らず)を扱うオブジェクトは factory の関数の引数として受け取るようにする
 //
 
-import { VNode } from './vnode'
+import { VNode, Text } from './vnode'
 
 export interface RendererOptions<
   HostNode = RendererNode,
@@ -34,6 +34,15 @@ export function createRenderer(options: RendererOptions) {
     createText: hostCreateText,
     insert: hostInsert,
   } = options
+
+  const patch = (n1: VNode | null, n2: VNode, container: RendererElement) => {
+    const { type } = n2
+    if (type === Text) {
+      // processText(n1, n2, container);
+    } else {
+      // processElement(n1, n2, container);
+    }
+  }
 
   const render: RootRenderFunction = (vnode, container) => {
     // TODO
