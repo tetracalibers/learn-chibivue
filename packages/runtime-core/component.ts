@@ -18,3 +18,24 @@ export interface ComponentInternalInstance {
 export type InternalRenderFunction = {
   (): VNodeChild
 }
+
+// コンポーネントのインスタンスを生成するための関数(コンストラクタの役割をするもの)
+export function createComponentInstance(
+  vnode: VNode
+): ComponentInternalInstance {
+  const type = vnode.type as Component
+
+  // 各プロパティの型は non-null だが，インスタンスを生成した段階では null で入れてしまう
+  const instance: ComponentInternalInstance = {
+    type,
+    vnode,
+    next: null,
+    effect: null!,
+    subTree: null!,
+    update: null!,
+    render: null!,
+    isMounted: false,
+  }
+
+  return instance
+}
