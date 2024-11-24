@@ -2,7 +2,7 @@ import { RendererNode } from './renderer'
 
 export const Text = Symbol()
 
-export type VNodeTypes = string | typeof Text
+export type VNodeTypes = string | typeof Text | object
 
 export interface VNode<HostNode = RendererNode> {
   type: VNodeTypes
