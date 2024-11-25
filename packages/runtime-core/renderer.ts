@@ -378,8 +378,8 @@ export function createRenderer(options: RendererOptions) {
     container: RendererElement,
     anchor: RendererElement | null
   ) => {
-    const { el, type } = vnode
-    if (typeof type === 'object') {
+    const { el, shapeFlag } = vnode
+    if (shapeFlag & ShapeFlags.COMPONENT) {
       move(vnode.component!.subTree, container, anchor)
       return
     }
