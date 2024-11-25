@@ -1,3 +1,4 @@
+import fs from 'node:fs'
 import type { Plugin } from 'vite'
 import { createFilter } from 'vite'
 import { parse, rewriteDefault } from '../../compiler-sfc'
@@ -9,6 +10,38 @@ export default function vitePluginChibivue(): Plugin {
   return {
     name: 'vite:chibivue',
 
+    //
+    // 仮想モジュール（styleブロックの解決）
+    // 1. resolveId に解決したいモジュールの id を任意に設定
+    // 2. load でその id をハンドリングすることによってモジュールを読み込むことができる
+    //
+
+    resolveId(id) {
+      // このidは実際には存在しないパスだが、loadで仮想的にハンドリングするのでidを返してあげる (読み込み可能だということにする)
+      if (id.match(/\.vue\.css$/)) return id
+
+      // ここでreturnされないidに関しては、実際にそのファイルが存在していたらそのファイルが解決されるし、存在していなければ存在しないというエラーになる
+    },
+
+    load(id) {
+      // .vue.cssがloadされた (importが宣言され、読み込まれた) ときのハンドリング
+      if (id.match(/\.vue\.css$/)) {
+        // .cssを除いたファイルパス(つまり通常の Vue ファイル)から SFC をfs.readFileSyncで取得
+        const filename = id.replace(/\.css$/, '')
+        const content = fs.readFileSync(filename, 'utf-8')
+
+        // パースして style タグの内容を取得
+        const { descriptor } = parse(content, { filename })
+        const styles = descriptor.styles.map((it) => it.content).join('\n')
+
+        return { code: styles }
+      }
+    },
+
+    //
+    // vueファイルの変換（script, templateブロックの解決）
+    //
+
     transform(code, id) {
       // transformの対象を「*.vue」に限定
       if (!filter(id)) return
@@ -19,6 +52,7 @@ export default function vitePluginChibivue(): Plugin {
 
       const outputs = []
       outputs.push("import * as ChibiVue from 'chibivue'\n")
+      outputs.push("import '" + id + ".css'")
 
       const { descriptor } = parse(code, { filename: id })
 
