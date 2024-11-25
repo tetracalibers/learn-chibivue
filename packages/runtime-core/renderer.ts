@@ -12,6 +12,7 @@ import {
   setupComponent,
 } from './component'
 import { updateProps } from './componentProps'
+import { queueJob, SchedulerJob } from './scheduler'
 import {
   VNode,
   Text,
@@ -498,14 +499,18 @@ export function createRenderer(options: RendererOptions) {
 
     // updateComponent を渡して ReactiveEffect (Observer 側)を生成する
     // それをinstance.effectに保持させる
-    const effect = (instance.effect = new ReactiveEffect(componentUpdateFn))
+    const effect = (instance.effect = new ReactiveEffect(
+      componentUpdateFn,
+      () => queueJob(update)
+    ))
 
     // effect.run() は effect を実行する関数
     // 1. activeEffect に updateComponent (を持った ReactiveEffect) が設定される
     // 2. この状態で track が走ると、targetMap に target と updateComponent (を持った ReactiveEffect) のマップが登録される（リアクティブの形成）
     // 3. この状態で target が書き換えられ（setterが実行され）、trigger が走ると、targetMap から effect(今回の例だと updateComponent)をみつけ、実行する
     // このように画面の更新を行う関数を、instance.update に登録しておく
-    const update = (instance.update = () => effect.run())
+    const update: SchedulerJob = (instance.update = () => effect.run())
+    update.id = instance.uid
 
     update()
   }
