@@ -4,6 +4,7 @@
 //
 
 import { ReactiveEffect } from '../reactivity'
+import { ShapeFlags } from '../shared/shapeFlags'
 import {
   Component,
   ComponentInternalInstance,
@@ -62,15 +63,15 @@ export function createRenderer(options: RendererOptions) {
     container: RendererElement,
     anchor: RendererElement | null
   ) => {
-    const { type } = n2
+    const { type, shapeFlag } = n2
     if (type === Text) {
       processText(n1, n2, container)
-    } else if (typeof type === 'string') {
+    } else if (shapeFlag & ShapeFlags.ELEMENT) {
       processElement(n1, n2, container, anchor)
-    } else if (typeof type === 'object') {
+    } else if (shapeFlag & ShapeFlags.COMPONENT) {
       processComponent(n1, n2, container, anchor)
     } else {
-      // noop
+      // do nothing
     }
   }
 
