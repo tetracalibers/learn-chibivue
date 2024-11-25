@@ -112,11 +112,39 @@ export function createRenderer(options: RendererOptions) {
   const patchChildren = (n1: VNode, n2: VNode, container: RendererElement) => {
     const c1 = n1.children as VNode[]
     const c2 = n2.children as VNode[]
+    patchKeyedChildren(c1, c2, container)
+  }
 
-    for (let i = 0; i < c2.length; i++) {
-      const child = (c2[i] = normalizeVNode(c2[i]))
-      patch(c1[i], child, container)
-    }
+  // TODO: anchor をバケツリレーできるように (move のための insert で使うので)
+  const patchKeyedChildren = (
+    c1: VNode[],
+    c2: VNode[],
+    container: RendererElement
+  ) => {
+    let i = 0
+    const l2 = c2.length
+    const e1 = c1.length - 1 // end index of prev node
+    const e2 = l2 - 1 // end index of next node
+
+    const s1 = i // start index of prev node
+    const s2 = i // start index of next node
+
+    //
+    // 1. 新しいノード c2 を元に key と index の Map を生成
+    //
+
+    //
+    // 2. key の Map を元に c2 の index と c1 の index の Map を生成
+    // この段階で、c1 ベースのループと c2 ベースのループで patch 処理をしておく (move はまだ)
+    //
+
+    //
+    // 3. ↑で得た Map を元に最長増加部分列を求める
+    //
+
+    //
+    // 4. ↑で得た部分列と c2 を元に move する
+    //
   }
 
   const processText = (
