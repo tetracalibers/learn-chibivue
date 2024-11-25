@@ -52,6 +52,7 @@ export function createRenderer(options: RendererOptions) {
     createElement: hostCreateElement,
     createText: hostCreateText,
     setText: hostSetText,
+    setElementText: hostSetElementText,
     insert: hostInsert,
     remove: hostRemove,
     parentNode: hostParentNode,
@@ -143,9 +144,58 @@ export function createRenderer(options: RendererOptions) {
     container: RendererElement,
     anchor: RendererElement | null
   ) => {
-    const c1 = n1.children as VNode[]
-    const c2 = n2.children as VNode[]
-    patchKeyedChildren(c1, c2, container, anchor)
+    const c1 = n1 && n1.children // 前回の子ノード
+    const prevShapeFlag = n1 ? n1.shapeFlag : 0 // 前回のノードのshapeフラグ（n1 が存在しない場合は 0）
+    const c2 = n2.children // 新しい子ノード
+    const { shapeFlag } = n2 // 新しいノードのshapeフラグ
+
+    if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
+      //
+      // 新しいノードの子がテキストノードの場合
+      //
+
+      if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+        // 前回の子が配列（複数の子ノード）だった場合、
+        // テキストノードに更新するため、前回の子ノードは不要になる
+        // => 前回の子ノードを全てアンマウント（削除）
+        unmountChildren(c1 as VNode[])
+      }
+      if (c2 !== c1) {
+        // テキスト内容が変更された場合、テキストを更新
+        hostSetElementText(container, c2 as string)
+      }
+    } else {
+      //
+      // 新しいノードの子がテキストノードではない場合
+      //
+
+      if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+        // 前回の子が配列（複数の子ノード）だった場合
+        if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+          // 新しい子も配列（複数の子ノード）の場合、
+          // 前回と新しい子ノードの配列を比較し、差分更新を行う
+          patchKeyedChildren(c1 as VNode[], c2 as VNode[], container, anchor)
+        } else {
+          // 新しい子が配列でない場合、
+          // 新しいノードが子供を持たない、またはテキストノードであるため、前回の子ノードは不要
+          // => 前回の子ノードを全てアンマウント（削除）
+          unmountChildren(c1 as VNode[])
+        }
+      } else {
+        if (prevShapeFlag & ShapeFlags.TEXT_CHILDREN) {
+          // 前回の子がテキストノードだった場合、
+          // 新しいノードがテキストノードでないため、以前のテキストをクリアする必要がある
+          // => コンテナのテキスト内容を空文字に設定し、テキストを削除
+          hostSetElementText(container, '')
+        }
+        if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+          // 新しい子が配列（複数の子ノード）の場合、
+          // 新しいノードが複数の子ノードを持つため、それらをDOMに反映させる必要がある
+          // => 新しい子ノードをマウント（追加）
+          mountChildren(c2 as VNode[], container, anchor)
+        }
+      }
+    }
   }
 
   const patchKeyedChildren = (
