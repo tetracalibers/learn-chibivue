@@ -10,8 +10,11 @@ export interface VNode<HostNode = RendererNode> {
   props: VNodeProps | null
   children: VNodeNormalizedChildren
   el: HostNode | undefined // 実際のDOMへの参照
+  key: VNodeKey | null
   component: ComponentInternalInstance | null // コンポーネントのインスタンス
 }
+
+export type VNodeKey = string | number | symbol
 
 export interface VNodeProps {
   [key: string]: any
@@ -28,7 +31,14 @@ export function createVNode(
   props: VNodeProps | null,
   children: VNodeNormalizedChildren
 ): VNode {
-  const vnode: VNode = { type, props, children, el: undefined, component: null }
+  const vnode: VNode = {
+    type,
+    props,
+    children,
+    el: undefined,
+    key: props?.key ?? null,
+    component: null,
+  }
   return vnode
 }
 
@@ -39,4 +49,8 @@ export function normalizeVNode(child: VNodeChild): VNode {
     // stringだった場合（テキスト）もVNodeとして扱えるようにする
     return createVNode(Text, null, String(child))
   }
+}
+
+export function isSameVNodeType(n1: VNode, n2: VNode): boolean {
+  return n1.type === n2.type && n1.key === n2.key
 }
