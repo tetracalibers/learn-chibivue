@@ -149,6 +149,16 @@ export function createRenderer(options: RendererOptions) {
     const c2 = n2.children // 新しい子ノード
     const { shapeFlag } = n2 // 新しいノードのshapeフラグ
 
+    //
+    // ビットマスクで子に関するshapeフラグをチェックし、フラグに応じて分岐処理を行う
+    //
+    // ビットフラグ（ビットマスク）：
+    // 一つの整数値で複数の状態を同時に管理できる手法
+    // - 整数値の各ビットを個別のフラグ（状態）として使用する
+    // - 各ビット位置に意味を持たせ、そのビットが 1 であればその状態が「真」であると解釈する
+    //
+
+    // ビット演算 & は、対応するビットが両方とも 1 の場合に 1 を返す
     if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
       //
       // 新しいノードの子がテキストノードの場合

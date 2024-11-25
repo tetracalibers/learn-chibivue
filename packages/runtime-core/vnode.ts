@@ -75,6 +75,8 @@ export function normalizeChildren(vnode: VNode, children: unknown) {
     type = ShapeFlags.TEXT_CHILDREN
   }
   vnode.children = children as VNodeNormalizedChildren
+  // 複数のフラグを一つの整数値に組み合わせる
+  // - ビット演算 OR は、対応するビットがどちらか一方でも立っていれば、そのビットを立てる
   vnode.shapeFlag |= type
 }
 
