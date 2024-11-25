@@ -50,6 +50,8 @@ export function createVNode(
     shapeFlag,
   }
 
+  normalizeChildren(vnode, children)
+
   return vnode
 }
 
@@ -60,6 +62,20 @@ export function normalizeVNode(child: VNodeChild): VNode {
     // stringだった場合（テキスト）もVNodeとして扱えるようにする
     return createVNode(Text, null, String(child))
   }
+}
+
+export function normalizeChildren(vnode: VNode, children: unknown) {
+  let type = 0
+  if (children == null) {
+    children = null
+  } else if (Array.isArray(children)) {
+    type = ShapeFlags.ARRAY_CHILDREN
+  } else {
+    children = String(children)
+    type = ShapeFlags.TEXT_CHILDREN
+  }
+  vnode.children = children as VNodeNormalizedChildren
+  vnode.shapeFlag |= type
 }
 
 export function isSameVNodeType(n1: VNode, n2: VNode): boolean {
