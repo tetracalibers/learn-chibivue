@@ -10,6 +10,7 @@ export interface VNode<HostNode = RendererNode> {
   props: VNodeProps | null
   children: VNodeNormalizedChildren
   el: HostNode | undefined // 実際のDOMへの参照
+  key: string | number | symbol | null
   component: ComponentInternalInstance | null // コンポーネントのインスタンス
 }
 
@@ -28,7 +29,14 @@ export function createVNode(
   props: VNodeProps | null,
   children: VNodeNormalizedChildren
 ): VNode {
-  const vnode: VNode = { type, props, children, el: undefined, component: null }
+  const vnode: VNode = {
+    type,
+    props,
+    children,
+    el: undefined,
+    key: props?.key ?? null,
+    component: null,
+  }
   return vnode
 }
 
