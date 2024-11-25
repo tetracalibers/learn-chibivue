@@ -23,6 +23,7 @@ export interface RendererOptions<
   setElementText(node: HostNode, text: string): void
   setText(node: HostNode, text: string): void
   insert(child: HostNode, parent: HostNode, anchor?: HostNode | null): void
+  remove(child: HostNode): void
   parentNode(node: HostNode): HostNode | null
 }
 
@@ -44,6 +45,7 @@ export function createRenderer(options: RendererOptions) {
     createText: hostCreateText,
     setText: hostSetText,
     insert: hostInsert,
+    remove: hostRemove,
     parentNode: hostParentNode,
   } = options
 
@@ -158,6 +160,32 @@ export function createRenderer(options: RendererOptions) {
     //
     // 4. ↑で得た部分列と c2 を元に move する
     //
+  }
+
+  const unmount = (vnode: VNode) => {
+    const { type, children } = vnode
+    if (typeof type === 'object') {
+      unmountComponent(vnode.component!)
+    } else if (Array.isArray(children)) {
+      unmountChildren(children as VNode[])
+    }
+    remove(vnode)
+  }
+
+  const remove = (vnode: VNode) => {
+    const { el } = vnode
+    hostRemove(el!)
+  }
+
+  const unmountComponent = (instance: ComponentInternalInstance) => {
+    const { subTree } = instance
+    unmount(subTree)
+  }
+
+  const unmountChildren = (children: VNode[]) => {
+    for (let i = 0; i < children.length; i++) {
+      unmount(children[i])
+    }
   }
 
   const processText = (
