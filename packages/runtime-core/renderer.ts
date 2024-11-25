@@ -11,7 +11,14 @@ import {
   setupComponent,
 } from './component'
 import { updateProps } from './componentProps'
-import { VNode, Text, normalizeVNode, createVNode, VNodeKey } from './vnode'
+import {
+  VNode,
+  Text,
+  normalizeVNode,
+  createVNode,
+  VNodeKey,
+  isSameVNodeType,
+} from './vnode'
 
 export interface RendererOptions<
   HostNode = RendererNode,
@@ -156,8 +163,10 @@ export function createRenderer(options: RendererOptions) {
     // - c2 ベースのループ： c2 にしかないノードは追加（mount）
     //
 
-    const toBePatched = e2 + 1 // パッチが必要な新しい子ノードの総数
+    let j
     let patched = 0 // パッチ済みのノード数
+
+    const toBePatched = e2 + 1 // パッチが必要な新しい子ノードの総数
 
     // 新indexと旧indexとのマップ
     // 新しい子ノードの各インデックスに対応する前回の子ノードのインデックスを保持する
@@ -176,18 +185,49 @@ export function createRenderer(options: RendererOptions) {
         continue
       }
 
-      const newIndex = prevChild.key
-        ? keyToNewIndexMap.get(prevChild.key)
-        : undefined
+      let newIndex
+
+      if (prevChild.key != null) {
+        //
+        // キーによる一致の試行
+        //
+
+        // 古いノードがキーを持つ場合、keyToNewIndexMapを使用して新しいノードのインデックスを取得
+        newIndex = keyToNewIndexMap.get(prevChild.key)
+      } else {
+        //
+        // キーなしノードの一致の試行
+        //
+
+        // キーを持たない場合、新しい子ノードリストをループし、同じタイプのキーなしノードを探す
+        for (j = 0; j <= e2; j++) {
+          if (
+            newIndexToOldIndexMap[j] === 0 &&
+            isSameVNodeType(prevChild, c2[j] as VNode)
+          ) {
+            newIndex = j
+            break
+          }
+        }
+      }
+
       if (newIndex === undefined) {
-        // 移動先が見つからない場合はアンマウントする
+        //
+        // 一致しない場合
+        //
+
+        // 移動先が見つからないので、アンマウントする
         // （旧にはあって、新にはない = 削除された）
         unmount(prevChild)
       } else {
-        // マップ形成
+        //
+        // 一致した場合
+        //
+
+        // newIndexToOldIndexMapに対応関係を記録
         newIndexToOldIndexMap[newIndex] = i + 1
 
-        // パッチ処理
+        // 一致したノードを再帰的にパッチ処理
         patch(prevChild, c2[newIndex] as VNode, container)
         patched++
       }

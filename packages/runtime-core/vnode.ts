@@ -50,3 +50,7 @@ export function normalizeVNode(child: VNodeChild): VNode {
     return createVNode(Text, null, String(child))
   }
 }
+
+export function isSameVNodeType(n1: VNode, n2: VNode): boolean {
+  return n1.type === n2.type && n1.key === n2.key
+}
