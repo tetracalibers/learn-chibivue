@@ -150,8 +150,46 @@ export function createRenderer(options: RendererOptions) {
 
     //
     // 2. key の Map を元に c2 の index と c1 の index の Map を生成
-    // この段階で、c1 ベースのループと c2 ベースのループで patch 処理をしておく (move はまだ)
     //
+    // この段階で、c1 ベースのループと c2 ベースのループで patch 処理をしておく (move はまだ)
+    // - c1 ベースのループ： c1 にしかないノードは削除（unmount）
+    // - c2 ベースのループ： c2 にしかないノードは追加（mount）
+    //
+
+    const toBePatched = e2 + 1 // パッチが必要な新しい子ノードの総数
+
+    // 新indexと旧indexとのマップ
+    // 新しい子ノードの各インデックスに対応する前回の子ノードのインデックスを保持する
+    const newIndexToOldIndexMap = new Array(toBePatched)
+    // 初期値は全て0（未マッチ）で初期化
+    for (i = 0; i < toBePatched; i++) newIndexToOldIndexMap[i] = 0
+
+    // 古い子ノードをループして新しい子ノードと比較
+    for (i = 0; i <= e1; i++) {
+      const prevChild = c1[i]
+      const newIndex = prevChild.key
+        ? keyToNewIndexMap.get(prevChild.key)
+        : undefined
+      if (newIndex === undefined) {
+        // 移動先が見つからない場合はアンマウントする
+        // （旧にはあって、新にはない = 削除された）
+        unmount(prevChild)
+      } else {
+        newIndexToOldIndexMap[newIndex] = i + 1 // マップ形成
+        patch(prevChild, c2[newIndex] as VNode, container) // パッチ処理
+      }
+    }
+
+    // 新しい子ノードリストを逆順にループ
+    for (i = toBePatched - 1; i >= 0; i--) {
+      const nextIndex = i
+      const nextChild = c2[nextIndex] as VNode
+      if (newIndexToOldIndexMap[i] === 0) {
+        // マップが存在しない(初期値のまま)のであれば新しくマウントする
+        // (新にはあって、旧にはない = 追加された)
+        patch(null, nextChild, container)
+      }
+    }
 
     //
     // 3. ↑で得た Map を元に最長増加部分列を求める
