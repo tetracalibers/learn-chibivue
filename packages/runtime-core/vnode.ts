@@ -1,3 +1,5 @@
+import { isObject, isString } from '../shared/general'
+import { ShapeFlags } from '../shared/shapeFlags'
 import { ComponentInternalInstance } from './component'
 import { RendererNode } from './renderer'
 
@@ -12,6 +14,7 @@ export interface VNode<HostNode = RendererNode> {
   el: HostNode | undefined // 実際のDOMへの参照
   key: VNodeKey | null
   component: ComponentInternalInstance | null // コンポーネントのインスタンス
+  shapeFlag: number
 }
 
 export type VNodeKey = string | number | symbol
@@ -31,6 +34,12 @@ export function createVNode(
   props: VNodeProps | null,
   children: VNodeNormalizedChildren
 ): VNode {
+  const shapeFlag = isString(type)
+    ? ShapeFlags.ELEMENT
+    : isObject(type)
+      ? ShapeFlags.COMPONENT
+      : 0
+
   const vnode: VNode = {
     type,
     props,
@@ -38,7 +47,9 @@ export function createVNode(
     el: undefined,
     key: props?.key ?? null,
     component: null,
+    shapeFlag,
   }
+
   return vnode
 }
 
