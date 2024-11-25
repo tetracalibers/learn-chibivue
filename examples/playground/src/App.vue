@@ -39,12 +39,3 @@
     <p>input value: {{ state.input }}</p>
   </div>
 </template>
-
-<style>
-  .container {
-    height: 100vh;
-    padding: 16px;
-    background-color: #becdbe;
-    color: #2c3e50;
-  }
-</style>
