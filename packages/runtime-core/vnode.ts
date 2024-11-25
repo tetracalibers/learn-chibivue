@@ -1,3 +1,5 @@
+import { isObject, isString } from '../shared/general'
+import { ShapeFlags } from '../shared/shapeFlags'
 import { ComponentInternalInstance } from './component'
 import { RendererNode } from './renderer'
 
@@ -12,6 +14,7 @@ export interface VNode<HostNode = RendererNode> {
   el: HostNode | undefined // 実際のDOMへの参照
   key: VNodeKey | null
   component: ComponentInternalInstance | null // コンポーネントのインスタンス
+  shapeFlag: number
 }
 
 export type VNodeKey = string | number | symbol
@@ -31,6 +34,12 @@ export function createVNode(
   props: VNodeProps | null,
   children: VNodeNormalizedChildren
 ): VNode {
+  const shapeFlag = isString(type)
+    ? ShapeFlags.ELEMENT
+    : isObject(type)
+      ? ShapeFlags.COMPONENT
+      : 0
+
   const vnode: VNode = {
     type,
     props,
@@ -38,7 +47,11 @@ export function createVNode(
     el: undefined,
     key: props?.key ?? null,
     component: null,
+    shapeFlag,
   }
+
+  normalizeChildren(vnode, children)
+
   return vnode
 }
 
@@ -49,6 +62,22 @@ export function normalizeVNode(child: VNodeChild): VNode {
     // stringだった場合（テキスト）もVNodeとして扱えるようにする
     return createVNode(Text, null, String(child))
   }
+}
+
+export function normalizeChildren(vnode: VNode, children: unknown) {
+  let type = 0
+  if (children == null) {
+    children = null
+  } else if (Array.isArray(children)) {
+    type = ShapeFlags.ARRAY_CHILDREN
+  } else {
+    children = String(children)
+    type = ShapeFlags.TEXT_CHILDREN
+  }
+  vnode.children = children as VNodeNormalizedChildren
+  // 複数のフラグを一つの整数値に組み合わせる
+  // - ビット演算 OR は、対応するビットがどちらか一方でも立っていれば、そのビットを立てる
+  vnode.shapeFlag |= type
 }
 
 export function isSameVNodeType(n1: VNode, n2: VNode): boolean {
