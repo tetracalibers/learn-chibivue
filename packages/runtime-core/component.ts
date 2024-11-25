@@ -95,4 +95,10 @@ export const setupComponent = (instance: ComponentInternalInstance) => {
       instance.render = compile(template)
     }
   }
+
+  // componentのrenderオプションをインスタンスに保持
+  const { render } = component
+  if (render) {
+    instance.render = render as InternalRenderFunction
+  }
 }
