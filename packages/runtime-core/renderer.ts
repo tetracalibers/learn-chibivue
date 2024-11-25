@@ -157,6 +157,7 @@ export function createRenderer(options: RendererOptions) {
     //
 
     const toBePatched = e2 + 1 // パッチが必要な新しい子ノードの総数
+    let patched = 0 // パッチ済みのノード数
 
     // 新indexと旧indexとのマップ
     // 新しい子ノードの各インデックスに対応する前回の子ノードのインデックスを保持する
@@ -167,6 +168,14 @@ export function createRenderer(options: RendererOptions) {
     // 古い子ノードをループして新しい子ノードと比較
     for (i = 0; i <= e1; i++) {
       const prevChild = c1[i]
+
+      if (patched >= toBePatched) {
+        // すべての新しい子ノードにはパッチが適用されている
+        // 残りの古い子ノードは削除する
+        unmount(prevChild)
+        continue
+      }
+
       const newIndex = prevChild.key
         ? keyToNewIndexMap.get(prevChild.key)
         : undefined
@@ -175,8 +184,12 @@ export function createRenderer(options: RendererOptions) {
         // （旧にはあって、新にはない = 削除された）
         unmount(prevChild)
       } else {
-        newIndexToOldIndexMap[newIndex] = i + 1 // マップ形成
-        patch(prevChild, c2[newIndex] as VNode, container) // パッチ処理
+        // マップ形成
+        newIndexToOldIndexMap[newIndex] = i + 1
+
+        // パッチ処理
+        patch(prevChild, c2[newIndex] as VNode, container)
+        patched++
       }
     }
 
