@@ -11,7 +11,7 @@ import {
   setupComponent,
 } from './component'
 import { updateProps } from './componentProps'
-import { VNode, Text, normalizeVNode, createVNode } from './vnode'
+import { VNode, Text, normalizeVNode, createVNode, VNodeKey } from './vnode'
 
 export interface RendererOptions<
   HostNode = RendererNode,
@@ -132,6 +132,15 @@ export function createRenderer(options: RendererOptions) {
     //
     // 1. 新しいノード c2 を元に key と index の Map を生成
     //
+
+    const keyToNewIndexMap: Map<VNodeKey, number> = new Map()
+
+    for (i = s2; i <= e2; i++) {
+      const nextChild = (c2[i] = normalizeVNode(c2[i]))
+      if (nextChild.key != null) {
+        keyToNewIndexMap.set(nextChild.key, i)
+      }
+    }
 
     //
     // 2. key の Map を元に c2 の index と c1 の index の Map を生成
