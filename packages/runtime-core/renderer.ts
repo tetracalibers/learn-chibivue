@@ -117,14 +117,16 @@ export function createRenderer(options: RendererOptions) {
 
   // TODO: anchor をバケツリレーできるように (move のための insert で使うので)
   const patchKeyedChildren = (
-    c1: VNode[],
-    c2: VNode[],
-    container: RendererElement
+    c1: VNode[], // 前回の子ノードの配列（旧仮想ノードリスト）
+    c2: VNode[], // 新しい子ノードの配列（新仮想ノードリスト）
+    container: RendererElement // 子ノードを含む親DOM要素
   ) => {
-    let i = 0
-    const l2 = c2.length
-    const e1 = c1.length - 1 // end index of prev node
-    const e2 = l2 - 1 // end index of next node
+    let i = 0 // ループカウンタ
+
+    const l2 = c2.length // 新しい子ノードリストの長さ
+
+    const e1 = c1.length - 1 // 前回の子ノードリストの末尾インデックス（end index of prev node）
+    const e2 = l2 - 1 // 新しい子ノードリストの末尾インデックス（end index of next node）
 
     const s1 = i // start index of prev node
     const s2 = i // start index of next node
@@ -133,8 +135,10 @@ export function createRenderer(options: RendererOptions) {
     // 1. 新しいノード c2 を元に key と index の Map を生成
     //
 
+    // キーを持つ新しい子ノードのキーとそのインデックスをマッピングしたもの
     const keyToNewIndexMap: Map<VNodeKey, number> = new Map()
 
+    // 新しい子ノードリスト c2 をループし、各ノードのキーを取得し、マップに追加
     for (i = s2; i <= e2; i++) {
       const nextChild = (c2[i] = normalizeVNode(c2[i]))
       if (nextChild.key != null) {
