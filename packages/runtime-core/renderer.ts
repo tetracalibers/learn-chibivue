@@ -164,7 +164,7 @@ export function createRenderer(options: RendererOptions) {
     const s2 = i // start index of next node
 
     //
-    // 1. 新しいノード c2 を元に key と index の Map を生成
+    // 新しいノード c2 を元に key と index の Map を生成
     //
 
     // キーを持つ新しい子ノードのキーとそのインデックスをマッピングしたもの
@@ -179,9 +179,9 @@ export function createRenderer(options: RendererOptions) {
     }
 
     //
-    // 2. key の Map を元に c2 の index と c1 の index の Map を生成
+    // key の Map を元に c2 の index と c1 の index の Map を生成
     //
-    // この段階で、c1 ベースのループと c2 ベースのループで patch 処理をしておく (move はまだ)
+    // c1 ベースのループと c2 ベースのループで patch 処理を行う
     // - c1 ベースのループ： c1 にしかないノードは削除（unmount）
     // - c2 ベースのループ： c2 にしかないノードは追加（mount）
     //
@@ -310,14 +310,6 @@ export function createRenderer(options: RendererOptions) {
         }
       }
     }
-
-    //
-    // 3. ↑で得た Map を元に最長増加部分列を求める
-    //
-
-    //
-    // 4. ↑で得た部分列と c2 を元に move する
-    //
   }
 
   const move = (
