@@ -191,6 +191,9 @@ export function createRenderer(options: RendererOptions) {
 
     const toBePatched = e2 + 1 // パッチが必要な新しい子ノードの総数
 
+    let moved = false // ノードの移動が必要かどうかを示すフラグ
+    let maxNewIndexSoFar = 0 // これまでに見つかった新しいインデックスの最大値
+
     // 新indexと旧indexとのマップ
     // 新しい子ノードの各インデックスに対応する前回の子ノードのインデックスを保持する
     const newIndexToOldIndexMap = new Array(toBePatched)
@@ -208,6 +211,8 @@ export function createRenderer(options: RendererOptions) {
         continue
       }
 
+      // 現在の前回のノード（prevChild）に対応する新しいノードのインデックス
+      // ループ内で、前回のノードが新しいリストのどこに位置するかを示す
       let newIndex
 
       if (prevChild.key != null) {
@@ -251,6 +256,16 @@ export function createRenderer(options: RendererOptions) {
         // newIndexToOldIndexMapに対応関係を記録
         newIndexToOldIndexMap[newIndex] = i + 1
 
+        // 新しいノードリストにおけるノードの相対的な順序を確認し、ノードの移動が必要かどうかを判定
+        if (newIndex >= maxNewIndexSoFar) {
+          // ノードが前回の順序に従って新しいリストにも配置されている（順序が維持されている）
+          // 移動は必要なく、最大値を更新すればよい
+          maxNewIndexSoFar = newIndex
+        } else {
+          // ノードが新しいリストで順序が変更された（ノードが移動した）
+          moved = true
+        }
+
         // 一致したノードを再帰的にパッチ処理
         // anchor は null
         // - 既存のノードを更新するだけで、新しい位置にノードを挿入する必要はない
@@ -260,7 +275,16 @@ export function createRenderer(options: RendererOptions) {
       }
     }
 
+    // 最長増加部分列（LIS）を取得
+    // ノードの新しいインデックスの配列からLISを求めることで、順序が維持されているノードの集合を特定できる
+    const increasingNewIndexSequence = moved
+      ? getSequence(newIndexToOldIndexMap)
+      : []
+
+    j = increasingNewIndexSequence.length - 1
+
     // 新しい子ノードリストを逆順にループ
+    // 後ろから処理することで、insertBefore 操作が簡単になる
     for (i = toBePatched - 1; i >= 0; i--) {
       const nextIndex = i
       const nextChild = c2[nextIndex] as VNode
@@ -275,6 +299,15 @@ export function createRenderer(options: RendererOptions) {
         // マップが存在しない(初期値のまま)のであれば新しくマウントする
         // (新にはあって、旧にはない = 追加された)
         patch(null, nextChild, container, anchor ?? null)
+      } else if (moved) {
+        if (j < 0 || i !== increasingNewIndexSequence[j]) {
+          // 現在のインデックスがLISに含まれない場合、ノードを移動する
+          move(nextChild, container, anchor ?? null)
+        } else {
+          // ノードの新しいインデックスがLISに含まれる場合、そのノードは移動しなくても良いと判断できる
+          // 移動はせずに、j をデクリメントして次のLISインデックスを参照する
+          j--
+        }
       }
     }
 
@@ -285,6 +318,19 @@ export function createRenderer(options: RendererOptions) {
     //
     // 4. ↑で得た部分列と c2 を元に move する
     //
+  }
+
+  const move = (
+    vnode: VNode,
+    container: RendererElement,
+    anchor: RendererElement | null
+  ) => {
+    const { el, type } = vnode
+    if (typeof type === 'object') {
+      move(vnode.component!.subTree, container, anchor)
+      return
+    }
+    hostInsert(el!, container, anchor)
   }
 
   const unmount = (vnode: VNode) => {
@@ -423,4 +469,47 @@ export function createRenderer(options: RendererOptions) {
   }
 
   return { render }
+}
+
+// 最長増加部分列（LIS）： 配列内で値が単調増加する最も長い部分列
+// https://en.wikipedia.org/wiki/Longest_increasing_subsequence
+function getSequence(arr: number[]): number[] {
+  const p = arr.slice()
+  const result = [0]
+  let i, j, u, v, c
+  const len = arr.length
+  for (i = 0; i < len; i++) {
+    const arrI = arr[i]
+    if (arrI !== 0) {
+      j = result[result.length - 1]
+      if (arr[j] < arrI) {
+        p[i] = j
+        result.push(i)
+        continue
+      }
+      u = 0
+      v = result.length - 1
+      while (u < v) {
+        c = (u + v) >> 1
+        if (arr[result[c]] < arrI) {
+          u = c + 1
+        } else {
+          v = c
+        }
+      }
+      if (arrI < arr[result[u]]) {
+        if (u > 0) {
+          p[i] = result[u - 1]
+        }
+        result[u] = i
+      }
+    }
+  }
+  u = result.length
+  v = result[u - 1]
+  while (u-- > 0) {
+    result[u] = v
+    v = p[v]
+  }
+  return result
 }
