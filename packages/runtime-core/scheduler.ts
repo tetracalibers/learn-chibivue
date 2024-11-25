@@ -60,7 +60,8 @@ function queueFlush() {
     // 実行が予約された
     isFlushPending = true
 
-    // 実行は非同期で行う
+    // 実行は非同期で行うことで、
+    // 同じイベントループ内で複数のジョブが追加されても、実行は一度だけ行われる
     resolvedPromise.then(() => {
       // 実行開始するので予約を解除
       isFlushPending = false
