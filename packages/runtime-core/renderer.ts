@@ -387,8 +387,8 @@ export function createRenderer(options: RendererOptions) {
   }
 
   const unmount = (vnode: VNode) => {
-    const { type, children } = vnode
-    if (typeof type === 'object') {
+    const { children, shapeFlag } = vnode
+    if (shapeFlag & ShapeFlags.COMPONENT) {
       unmountComponent(vnode.component!)
     } else if (Array.isArray(children)) {
       unmountChildren(children as VNode[])
