@@ -5,8 +5,22 @@ const targetMap = new WeakMap<any, KeyToDepMap>()
 
 export let activeEffect: ReactiveEffect | undefined
 
+export type EffectScheduler = (...args: any[]) => any
+
+//
+// Reactive な作用として扱うものを、2パターンに分ける
+// - 能動的に実行する作用： 作用を設定した側で明示的に呼び出される
+// - 受動的に実行される作用： dep に追加された後で、何らかの外部のアクションによって trigger される
+//
+// スケジューリングの対応が必要なのは、受動的に実行される作用のみ
+// （不特定多数の depsMap に追加され，バラバラにいろんなところから trigger されるため）
+//
+
 export class ReactiveEffect<T = any> {
-  constructor(public fn: () => T) {}
+  constructor(
+    public fn: () => T, // 能動的な作用
+    public scheduler: EffectScheduler | null = null // 受動的な作用
+  ) {}
 
   run() {
     // ※ fnを実行する前のactiveEffectを保持しておいて、実行が終わった後元に戻します。
@@ -44,7 +58,13 @@ export function trigger(target: object, key?: unknown) {
   if (dep) {
     const effects = [...dep]
     for (const effect of effects) {
-      effect.run()
+      if (effect.scheduler) {
+        // scheduler を優先して実行
+        effect.scheduler()
+      } else {
+        // なければ通常の作用を実行
+        effect.run()
+      }
     }
   }
 }
