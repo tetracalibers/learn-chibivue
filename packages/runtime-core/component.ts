@@ -19,6 +19,7 @@ export type Component = ComponentOptions
 export type Data = Record<string, unknown>
 
 export interface ComponentInternalInstance {
+  uid: number
   type: Component // 元となるユーザー定義のコンポーネント
   vnode: VNode
   subTree: VNode // レンダリング結果であるVNode 1（差分を比較するためのもの）
@@ -37,6 +38,9 @@ export type InternalRenderFunction = {
   (ctx: Data): VNodeChild
 }
 
+// コンポーネント単位でジョブをまとめるための識別子
+let uid = 0
+
 // コンポーネントのインスタンスを生成するための関数(コンストラクタの役割をするもの)
 export function createComponentInstance(
   vnode: VNode
@@ -45,6 +49,7 @@ export function createComponentInstance(
 
   // 各プロパティの型は non-null だが，インスタンスを生成した段階では null で入れてしまう
   const instance: ComponentInternalInstance = {
+    uid: uid++,
     type,
     vnode,
     next: null,
