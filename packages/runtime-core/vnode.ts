@@ -10,9 +10,11 @@ export interface VNode<HostNode = RendererNode> {
   props: VNodeProps | null
   children: VNodeNormalizedChildren
   el: HostNode | undefined // 実際のDOMへの参照
-  key: string | number | symbol | null
+  key: VNodeKey | null
   component: ComponentInternalInstance | null // コンポーネントのインスタンス
 }
+
+export type VNodeKey = string | number | symbol
 
 export interface VNodeProps {
   [key: string]: any
