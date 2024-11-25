@@ -2,9 +2,9 @@ import { createApp, h, reactive } from 'chibivue'
 
 const app = createApp({
   setup() {
-    const state = reactive({ list: ['A', 'B', 'C', 'D'] })
+    const state = reactive({ list: ['A', 'B', 'C'] })
     const updateList = () => {
-      state.list = ['1', '2', '3']
+      state.list = ['1', '2', '3', '4']
     }
 
     return () =>
