@@ -47,7 +47,7 @@ export default function vitePluginChibivue(): Plugin {
       if (!filter(id)) return
 
       //
-      // vueファイルだった場合はファイル内容にtransform
+      // vueファイルだった場合はファイル内容を解析して、変換後のコードを返す
       //
 
       const outputs = []
