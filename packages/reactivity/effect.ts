@@ -1,8 +1,15 @@
 import { Dep, createDep } from './dep'
 
-type KeyToDepMap = Map<any, Dep>
-const targetMap = new WeakMap<any, KeyToDepMap>()
+// target: リアクティブにしたいオブジェクト
+type Target = any // 任意のtarget
+type TargetKey = any // targetが持つ任意のkey
 
+// targetのkeyと作用のマップ
+// - dep: 実行したい作用(関数)
+type KeyToDepMap = Map<TargetKey, Dep>
+const targetMap = new WeakMap<Target, KeyToDepMap>()
+
+// trackで登録する関数（作用）を管理する
 export let activeEffect: ReactiveEffect | undefined
 
 export type EffectScheduler = (...args: any[]) => any
@@ -33,6 +40,7 @@ export class ReactiveEffect<T = any> {
   }
 }
 
+// TargetMap に登録する
 export function track(target: object, key: unknown) {
   let depsMap = targetMap.get(target)
   if (!depsMap) {
@@ -49,6 +57,7 @@ export function track(target: object, key: unknown) {
   }
 }
 
+// TargetMap から作用を取り出して実行する
 export function trigger(target: object, key?: unknown) {
   const depsMap = targetMap.get(target)
   if (!depsMap) return
