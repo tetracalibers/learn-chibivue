@@ -1,3 +1,4 @@
+import { IfAny } from '../shared'
 import { createDep, Dep } from './dep'
 import { getDepFromReactive, trackEffects, triggerEffects } from './effect'
 import { toReactive } from './reactive'
@@ -116,6 +117,17 @@ export function triggerRef(ref: Ref) {
 // to ref
 //
 
+export type ToRef<T> = IfAny<T, Ref<T>, [T] extends [Ref] ? T : Ref<T>>
+
+export function toRef<T extends object, K extends keyof T>(
+  object: T,
+  key: K
+): ToRef<T[K]>
+export function toRef<T extends object, K extends keyof T>(
+  object: T,
+  key: K,
+  defaultValue: T[K]
+): ToRef<Exclude<T[K], undefined>>
 export function toRef(
   source: Record<string, any>,
   key?: string,
