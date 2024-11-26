@@ -116,6 +116,10 @@ export function triggerRef(ref: Ref) {
 //
 // to ref
 //
+// toRef によって作られた ref は元の reactive オブジェクトと同期される
+// - この ref に変更を加えると元の reactive オブジェクトも更新される
+// - 元の reactive オブジェクトに変更があるとこの ref も更新される
+//
 
 export type ToRef<T> = IfAny<T, Ref<T>, [T] extends [Ref] ? T : Ref<T>>
 
@@ -129,8 +133,8 @@ export function toRef<T extends object, K extends keyof T>(
   defaultValue: T[K]
 ): ToRef<Exclude<T[K], undefined>>
 export function toRef(
-  source: Record<string, any>,
-  key?: string,
+  source: Record<string, any>, // reactive オブジェクト
+  key?: string, // refに変換したいプロパティ
   defaultValue?: unknown
 ): Ref {
   return propertyToRef(source, key!, defaultValue)
@@ -154,11 +158,13 @@ class ObjectRefImpl<T extends object, K extends keyof T> {
   ) {}
 
   get value() {
+    // 元のリアクティブオブジェクトのプロパティを直接取り出す
     const val = this._object[this._key]
     return val === undefined ? (this._defaultValue as T[K]) : val
   }
 
   set value(newVal) {
+    // 元のリアクティブオブジェクトのプロパティを直接更新
     this._object[this._key] = newVal
   }
 
