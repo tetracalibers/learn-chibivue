@@ -3,18 +3,20 @@ import { createApp, h, reactive } from 'chibivue'
 const app = createApp({
   setup() {
     const state = reactive({
-      message: 'Hello World',
+      count: 0,
     })
     const updateState = () => {
-      state.message = 'Hello ChibiVue!'
-      state.message = 'Hello ChibiVue!!'
+      state.count++
+
+      const p = document.getElementById('count-p')
+      if (p) {
+        console.log('😎 p.textContent', p.textContent)
+      }
     }
 
     return () => {
-      console.log('😎 rendered!')
-
       return h('div', { id: 'app' }, [
-        h('p', {}, [`message: ${state.message}`]),
+        h('p', { id: 'count-p' }, [`${state.count}`]),
         h('button', { onClick: updateState }, ['update']),
       ])
     }
