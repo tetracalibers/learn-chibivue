@@ -1,3 +1,4 @@
+import { isArray } from '../shared'
 import { Dep, createDep } from './dep'
 
 // target: リアクティブにしたいオブジェクト
@@ -5,8 +6,10 @@ type Target = any // 任意のtarget
 type TargetKey = any // targetが持つ任意のkey
 
 // targetのkeyと作用のマップ
-// - dep: 実行したい作用(関数)
+// - dep：target[key]の値を追跡して処理を行う関数（Reactive Effect）の集合
+// - Reactive Effect：依存関係を自動的に追跡し、依存関係が変更されるたびに再実行する副作用（エフェクト）
 type KeyToDepMap = Map<TargetKey, Dep>
+// エフェクトの購読を格納するマップ
 const targetMap = new WeakMap<Target, KeyToDepMap>()
 
 // trackで登録する関数（作用）を管理する
@@ -49,9 +52,15 @@ export function track(target: object, key: unknown) {
 
   let dep = depsMap.get(key)
   if (!dep) {
+    // target[key]が初めて追跡された場合は、Setがまだ存在しないので新規作成
     depsMap.set(key, (dep = createDep()))
   }
 
+  trackEffects(dep)
+}
+
+// 現在実行中のエフェクトがあれば、dep に追加する
+export function trackEffects(dep: Dep) {
   if (activeEffect) {
     dep.add(activeEffect)
   }
@@ -60,20 +69,34 @@ export function track(target: object, key: unknown) {
 // TargetMap から作用を取り出して実行する
 export function trigger(target: object, key?: unknown) {
   const depsMap = targetMap.get(target)
+
+  // 購読者がいない場合は何もしない（実行すべき作用がない）
   if (!depsMap) return
 
+  // target[key]を追跡している作用を取得
   const dep = depsMap.get(key)
 
   if (dep) {
     const effects = [...dep]
-    for (const effect of effects) {
-      if (effect.scheduler) {
-        // scheduler を優先して実行
-        effect.scheduler()
-      } else {
-        // なければ通常の作用を実行
-        effect.run()
-      }
-    }
+    triggerEffects(effects)
+  }
+}
+
+// 作用のリストを順に実行する
+export function triggerEffects(dep: Dep | ReactiveEffect[]) {
+  const effects = isArray(dep) ? dep : [...dep]
+  for (const effect of effects) {
+    triggerEffect(effect)
+  }
+}
+
+// 作用を実行する
+function triggerEffect(effect: ReactiveEffect) {
+  if (effect.scheduler) {
+    // scheduler を優先して実行
+    effect.scheduler()
+  } else {
+    // なければ通常の作用を実行
+    effect.run()
   }
 }
