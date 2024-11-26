@@ -1,4 +1,4 @@
-import { IfAny } from '../shared'
+import { IfAny, isArray } from '../shared'
 import { createDep, Dep } from './dep'
 import { getDepFromReactive, trackEffects, triggerEffects } from './effect'
 import { toReactive } from './reactive'
@@ -58,7 +58,7 @@ export function shallowRef(value?: unknown) {
 }
 
 //
-// common
+// common (ref)
 //
 
 function createRef(rawValue: unknown, shallow: boolean) {
@@ -139,6 +139,28 @@ export function toRef(
 ): Ref {
   return propertyToRef(source, key!, defaultValue)
 }
+
+//
+// to refs
+//
+// - reactive オブジェクトの全てのプロパティの ref を生成する
+//
+
+export type ToRefs<T = any> = {
+  [K in keyof T]: ToRef<T[K]>
+}
+
+export function toRefs<T extends object>(object: T): ToRefs<T> {
+  const ret: any = isArray(object) ? new Array(object.length) : {}
+  for (const key in object) {
+    ret[key] = propertyToRef(object, key)
+  }
+  return ret
+}
+
+//
+// common (to ref)
+//
 
 function propertyToRef(
   source: Record<string, any>,
