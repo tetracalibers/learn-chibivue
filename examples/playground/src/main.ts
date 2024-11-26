@@ -1,8 +1,8 @@
-import { createApp, h, ref } from 'chibivue'
+import { createApp, h, shallowRef } from 'chibivue'
 
 const app = createApp({
   setup() {
-    const state = ref({ count: 0 })
+    const state = shallowRef({ count: 0 })
 
     return () =>
       h('div', {}, [
@@ -23,11 +23,11 @@ const app = createApp({
           'button',
           {
             onClick: () => {
-              // 描画が更新される
+              // 描画は更新されない（が、内部の値はインクリメントされる）
               state.value.count++
             },
           },
-          ['not trigger ... ?']
+          ['not trigger ...']
         ),
       ])
   },
