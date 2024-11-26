@@ -2,12 +2,33 @@ import { createApp, h, ref } from 'chibivue'
 
 const app = createApp({
   setup() {
-    const count = ref(0)
+    const state = ref({ count: 0 })
 
     return () =>
       h('div', {}, [
-        h('p', {}, [`count: ${count.value}`]),
-        h('button', { onClick: () => count.value++ }, ['Increment']),
+        h('p', {}, [`count: ${state.value.count}`]),
+
+        h(
+          'button',
+          {
+            onClick: () => {
+              // 描画が更新される
+              state.value = { count: state.value.count + 1 }
+            },
+          },
+          ['increment']
+        ),
+
+        h(
+          'button',
+          {
+            onClick: () => {
+              // 描画が更新される
+              state.value.count++
+            },
+          },
+          ['not trigger ... ?']
+        ),
       ])
   },
 })
