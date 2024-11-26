@@ -1,5 +1,6 @@
+import { IfAny } from '../shared'
 import { createDep, Dep } from './dep'
-import { trackEffects, triggerEffects } from './effect'
+import { getDepFromReactive, trackEffects, triggerEffects } from './effect'
 import { toReactive } from './reactive'
 
 //
@@ -110,4 +111,64 @@ class RefImpl<T> {
 
 export function triggerRef(ref: Ref) {
   triggerRefValue(ref)
+}
+
+//
+// to ref
+//
+// toRef によって作られた ref は元の reactive オブジェクトと同期される
+// - この ref に変更を加えると元の reactive オブジェクトも更新される
+// - 元の reactive オブジェクトに変更があるとこの ref も更新される
+//
+
+export type ToRef<T> = IfAny<T, Ref<T>, [T] extends [Ref] ? T : Ref<T>>
+
+export function toRef<T extends object, K extends keyof T>(
+  object: T,
+  key: K
+): ToRef<T[K]>
+export function toRef<T extends object, K extends keyof T>(
+  object: T,
+  key: K,
+  defaultValue: T[K]
+): ToRef<Exclude<T[K], undefined>>
+export function toRef(
+  source: Record<string, any>, // reactive オブジェクト
+  key?: string, // refに変換したいプロパティ
+  defaultValue?: unknown
+): Ref {
+  return propertyToRef(source, key!, defaultValue)
+}
+
+function propertyToRef(
+  source: Record<string, any>,
+  key: string,
+  defaultValue?: unknown
+) {
+  return new ObjectRefImpl(source, key, defaultValue) as any
+}
+
+class ObjectRefImpl<T extends object, K extends keyof T> {
+  public readonly __v_isRef = true
+
+  constructor(
+    private readonly _object: T,
+    private readonly _key: K,
+    private readonly _defaultValue?: T[K]
+  ) {}
+
+  get value() {
+    // 元のリアクティブオブジェクトのプロパティを直接取り出す
+    const val = this._object[this._key]
+    return val === undefined ? (this._defaultValue as T[K]) : val
+  }
+
+  set value(newVal) {
+    // 元のリアクティブオブジェクトのプロパティを直接更新
+    this._object[this._key] = newVal
+  }
+
+  get dep(): Dep | undefined {
+    return getDepFromReactive(this._object, this._key)
+  }
 }
