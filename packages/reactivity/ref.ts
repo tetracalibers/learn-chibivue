@@ -29,6 +29,17 @@ export function isRef(r: any): r is Ref {
   return !!(r && r.__v_isRef === true)
 }
 
+export function ref(value?: unknown) {
+  return createRef(value)
+}
+
+function createRef(rawValue: unknown) {
+  if (isRef(rawValue)) {
+    return rawValue
+  }
+  return new RefImpl(rawValue)
+}
+
 // 現在のエフェクトをdepに登録する（depが存在しない場合は新たに作成する）
 export function trackRefValue(ref: RefBase<any>) {
   trackEffects(ref.dep || (ref.dep = createDep()))
