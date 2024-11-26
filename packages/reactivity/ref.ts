@@ -1,5 +1,5 @@
 import { createDep, Dep } from './dep'
-import { trackEffects, triggerEffects } from './effect'
+import { getDepFromReactive, trackEffects, triggerEffects } from './effect'
 import { toReactive } from './reactive'
 
 //
@@ -110,4 +110,47 @@ class RefImpl<T> {
 
 export function triggerRef(ref: Ref) {
   triggerRefValue(ref)
+}
+
+//
+// to ref
+//
+
+export function toRef(
+  source: Record<string, any>,
+  key?: string,
+  defaultValue?: unknown
+): Ref {
+  return propertyToRef(source, key!, defaultValue)
+}
+
+function propertyToRef(
+  source: Record<string, any>,
+  key: string,
+  defaultValue?: unknown
+) {
+  return new ObjectRefImpl(source, key, defaultValue) as any
+}
+
+class ObjectRefImpl<T extends object, K extends keyof T> {
+  public readonly __v_isRef = true
+
+  constructor(
+    private readonly _object: T,
+    private readonly _key: K,
+    private readonly _defaultValue?: T[K]
+  ) {}
+
+  get value() {
+    const val = this._object[this._key]
+    return val === undefined ? (this._defaultValue as T[K]) : val
+  }
+
+  set value(newVal) {
+    this._object[this._key] = newVal
+  }
+
+  get dep(): Dep | undefined {
+    return getDepFromReactive(this._object, this._key)
+  }
 }
