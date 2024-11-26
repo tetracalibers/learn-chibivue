@@ -14,6 +14,7 @@ const app = createApp({
             onClick: () => {
               // 描画が更新される
               state.value = { count: state.value.count + 1 }
+              console.log('valueを更新：', state.value.count)
             },
           },
           ['increment']
@@ -25,6 +26,7 @@ const app = createApp({
             onClick: () => {
               // 描画は更新されない（が、内部の値はインクリメントされる）
               state.value.count++
+              console.log('value.countを更新：', state.value.count)
             },
           },
           ['not trigger ...']
