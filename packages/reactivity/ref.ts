@@ -13,9 +13,20 @@ import { toReactive } from './reactive'
 // - valueプロパティにオブジェクトが設定された場合は、そのオブジェクトをreactiveに変換する
 //
 
+declare const RefSymbol: unique symbol
+
 type RefBase<T> = {
   dep?: Dep // 値の購読者
   value: T // 値
+}
+
+export interface Ref<T = any> {
+  value: T
+  [RefSymbol]: true
+}
+
+export function isRef(r: any): r is Ref {
+  return !!(r && r.__v_isRef === true)
 }
 
 // 現在のエフェクトをdepに登録する（depが存在しない場合は新たに作成する）
@@ -31,6 +42,7 @@ export function triggerRefValue(ref: RefBase<any>) {
 class RefImpl<T> {
   private _value: T
   public dep?: Dep = undefined
+  public readonly __v_isRef = true
 
   constructor(value: T) {
     // ref の値としてオブジェクトが代入された場合、そのオブジェクトを reactive に変換する
