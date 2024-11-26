@@ -1,29 +1,14 @@
-import { createApp, h, nextTick, reactive } from 'chibivue'
+import { createApp, h, ref } from 'chibivue'
 
 const app = createApp({
   setup() {
-    const state = reactive({
-      count: 0,
-    })
-    const updateState = async () => {
-      state.count++
+    const count = ref(0)
 
-      // DOMの更新を待つ
-      await nextTick()
-
-      // DOMが更新されたら、その中身を表示
-      const p = document.getElementById('count-p')
-      if (p) {
-        console.log('😎 p.textContent', p.textContent)
-      }
-    }
-
-    return () => {
-      return h('div', { id: 'app' }, [
-        h('p', { id: 'count-p' }, [`${state.count}`]),
-        h('button', { onClick: updateState }, ['update']),
+    return () =>
+      h('div', {}, [
+        h('p', {}, [`count: ${count.value}`]),
+        h('button', { onClick: () => count.value++ }, ['Increment']),
       ])
-    }
   },
 })
 
