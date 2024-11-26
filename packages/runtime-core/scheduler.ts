@@ -25,6 +25,17 @@ const resolvedPromise = Promise.resolve() as Promise<any>
 // 今実行しているジョブ(promise)を保持する変数
 let currentFlushPromise: Promise<void> | null = null
 
+// スケジューラによって DOM に変更が適応されるまで待つAPI
+export function nextTick<T = void>(
+  this: T,
+  fn?: (this: T) => void
+): Promise<void> {
+  // キューにジョブがなければ resolvedPromise の then に繋げて、次のジョブを実行する
+  const p = currentFlushPromise || resolvedPromise
+  // ジョブが完了した際に（Promiseがresolveされた = then内で）、nextTick に渡されたコールバックを実行する
+  return fn ? p.then(this ? fn.bind(this) : fn) : p
+}
+
 // ジョブをキューに追加する関数
 export function queueJob(job: SchedulerJob) {
   if (
