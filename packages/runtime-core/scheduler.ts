@@ -22,6 +22,9 @@ let isFlushPending = false
 // 非同期処理をスケジュールするために使用される
 const resolvedPromise = Promise.resolve() as Promise<any>
 
+// 今実行しているジョブ(promise)を保持する変数
+let currentFlushPromise: Promise<void> | null = null
+
 // ジョブをキューに追加する関数
 export function queueJob(job: SchedulerJob) {
   if (
@@ -62,7 +65,7 @@ function queueFlush() {
 
     // 実行は非同期で行うことで、
     // 同じイベントループ内で複数のジョブが追加されても、実行は一度だけ行われる
-    resolvedPromise.then(() => {
+    currentFlushPromise = resolvedPromise.then(() => {
       // 実行開始するので予約を解除
       isFlushPending = false
       // 実行が開始された
@@ -79,6 +82,7 @@ function queueFlush() {
 
       // 実行が終了した
       isFlushing = false
+      currentFlushPromise = null
     })
   }
 }
