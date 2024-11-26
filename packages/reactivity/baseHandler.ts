@@ -5,6 +5,7 @@ export const mutableHandlers: ProxyHandler<object> = {
   get(target: object, key: string | symbol, receiver: object) {
     track(target, key)
 
+    // Reflect.get は target[key] を関数化したようなもの
     const res = Reflect.get(target, key, receiver)
     // objectの場合はreactiveにしてあげる (これにより、ネストしたオブジェクトもリアクティブにすることができます。)
     if (res !== null && typeof res === 'object') {
@@ -16,6 +17,7 @@ export const mutableHandlers: ProxyHandler<object> = {
 
   set(target: object, key: string | symbol, value: unknown, receiver: object) {
     let oldValue = (target as any)[key]
+    // Reflect.set は target[key] = value を関数化したようなもの
     Reflect.set(target, key, value, receiver)
     // 値が変わったかどうかをチェックしてあげておく
     if (hasChanged(value, oldValue)) {
