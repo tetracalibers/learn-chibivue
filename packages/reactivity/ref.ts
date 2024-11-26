@@ -103,3 +103,11 @@ class RefImpl<T> {
     triggerRefValue(this)
   }
 }
+
+//
+// trigger ref
+//
+
+export function triggerRef(ref: Ref) {
+  triggerRefValue(ref)
+}
