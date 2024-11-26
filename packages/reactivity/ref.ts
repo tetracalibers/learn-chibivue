@@ -30,17 +30,25 @@ export function isRef(r: any): r is Ref {
   return !!(r && r.__v_isRef === true)
 }
 
+//
+// ref
+//
+
 export function ref<T = any>(): Ref<T | undefined>
 export function ref<T = any>(value: T): Ref<T>
 export function ref(value?: unknown) {
-  return createRef(value)
+  return createRef(value, false)
 }
 
-function createRef(rawValue: unknown) {
+//
+// common
+//
+
+function createRef(rawValue: unknown, shallow: boolean) {
   if (isRef(rawValue)) {
     return rawValue
   }
-  return new RefImpl(rawValue)
+  return new RefImpl(rawValue, shallow)
 }
 
 // 現在のエフェクトをdepに登録する（depが存在しない場合は新たに作成する）
@@ -58,9 +66,13 @@ class RefImpl<T> {
   public dep?: Dep = undefined
   public readonly __v_isRef = true
 
-  constructor(value: T) {
-    // ref の値としてオブジェクトが代入された場合、そのオブジェクトを reactive に変換する
-    this._value = toReactive(value)
+  constructor(
+    value: T,
+    public readonly __v_isShallow: boolean
+  ) {
+    // ref： 深いリアクティブ（オブジェクトが代入された場合、そのオブジェクトを reactive に変換する）
+    // shallow ref： 浅いリアクティブ（reactive への変換をスキップ）
+    this._value = __v_isShallow ? value : toReactive(value)
   }
 
   // Refの値にアクセスされたら、現在のエフェクトをdepに登録する
@@ -71,7 +83,7 @@ class RefImpl<T> {
 
   // Refの値が変更されたら、depに登録されたエフェクトを実行する
   set value(newVal) {
-    this._value = toReactive(newVal)
+    this._value = this.__v_isShallow ? newVal : toReactive(newVal)
     triggerRefValue(this)
   }
 }
