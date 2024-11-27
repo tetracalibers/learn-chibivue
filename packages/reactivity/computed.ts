@@ -18,6 +18,8 @@ export interface WritableComputedOptions<T> {
   set: ComputedSetter<T>
 }
 
+export function computed<T>(getterOrOptions: ComputedGetter<T>): ComputedRef<T>
+export function computed<T>(getterOrOptions: WritableComputedOptions<T>): Ref<T>
 export function computed<T>(
   getterOrOptions: ComputedGetter<T> | WritableComputedOptions<T>
 ) {
