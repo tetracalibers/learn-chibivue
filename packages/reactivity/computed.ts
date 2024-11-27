@@ -1,8 +1,19 @@
 import { Dep } from './dep'
 import { ReactiveEffect } from './effect'
-import { trackRefValue, triggerRefValue } from './ref'
+import { Ref, trackRefValue, triggerRefValue } from './ref'
+
+declare const ComputedRefSymbol: unique symbol
+
+export interface ComputedRef<T = any> extends Ref {
+  readonly value: T
+  [ComputedRefSymbol]: true
+}
 
 type ComputedGetter<T> = (...args: any[]) => T
+
+export function computed<T>(getter: ComputedGetter<T>): ComputedRef<T> {
+  return new ComputedRefImpl(getter) as any
+}
 
 export class ComputedRefImpl<T> {
   public dep?: Dep = undefined
