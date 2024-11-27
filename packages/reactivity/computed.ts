@@ -1,3 +1,4 @@
+import { isFunction } from '../shared'
 import { Dep } from './dep'
 import { ReactiveEffect } from './effect'
 import { Ref, trackRefValue, triggerRefValue } from './ref'
@@ -9,10 +10,31 @@ export interface ComputedRef<T = any> extends Ref {
   [ComputedRefSymbol]: true
 }
 
-type ComputedGetter<T> = (...args: any[]) => T
+export type ComputedGetter<T> = (...args: any[]) => T
+export type ComputedSetter<T> = (v: T) => void
 
-export function computed<T>(getter: ComputedGetter<T>): ComputedRef<T> {
-  return new ComputedRefImpl(getter) as any
+export interface WritableComputedOptions<T> {
+  get: ComputedGetter<T>
+  set: ComputedSetter<T>
+}
+
+export function computed<T>(
+  getterOrOptions: ComputedGetter<T> | WritableComputedOptions<T>
+) {
+  let getter: ComputedGetter<T>
+  let setter: ComputedSetter<T>
+
+  const onlyGetter = isFunction(getterOrOptions)
+
+  if (onlyGetter) {
+    getter = getterOrOptions
+    setter = () => {}
+  } else {
+    getter = getterOrOptions.get
+    setter = getterOrOptions.set
+  }
+
+  return new ComputedRefImpl(getter, setter) as any
 }
 
 export class ComputedRefImpl<T> {
@@ -24,7 +46,10 @@ export class ComputedRefImpl<T> {
   public readonly __v_isRef = true
   public _dirty = true // 再計算する必要があるか？を表すフラグ
 
-  constructor(getter: ComputedGetter<T>) {
+  constructor(
+    getter: ComputedGetter<T>,
+    private readonly _setter: ComputedSetter<T>
+  ) {
     this.effect = new ReactiveEffect(getter, () => {
       // _dirtyフラグの書き換えをスケジューラのジョブとして実行する
       // 不特定多数の依存に trigger されるため、スケジューリングが必要
@@ -44,5 +69,9 @@ export class ComputedRefImpl<T> {
       this._value = this.effect.run()
     }
     return this._value
+  }
+
+  set value(newValue: T) {
+    this._setter(newValue)
   }
 }
