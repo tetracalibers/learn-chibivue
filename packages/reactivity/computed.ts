@@ -21,6 +21,7 @@ export class ComputedRefImpl<T> {
   private _value!: T
   public readonly effect: ReactiveEffect<T>
 
+  public readonly __v_isRef = true
   public _dirty = true // 再計算する必要があるか？を表すフラグ
 
   constructor(getter: ComputedGetter<T>) {
